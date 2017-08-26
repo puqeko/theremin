@@ -2,7 +2,12 @@
  * ENEL200 Design Project (Theremin)
  * Ultrasonic controlled PWM sinewave generator.
  * 
- * Thomas Morrison, 26/08/17.
+ * Adapted from:
+ * KHM 2009 /  Martin Nawrath
+ * Kunsthochschule fuer Medien Koeln
+ * Academy of Media Arts Cologne
+ * 
+ * Editied 26/08/2017
  */
 
 #include "avr/pgmspace.h"
@@ -35,9 +40,10 @@ volatile unsigned long tword_m;  // dds tuning word m
 #define echoPin 7   // Echo Pin
 #define trigPin 8   // Trigger Pin
 #define PWMPin 11   // PWM Output
+#define KERNAL_SIZE 13
 
-double distanceBuffer[7] = {0.0};
-double filterKernal[] = {1.0/64.0, 6.0/64.0, 15.0/64.0, 20.0/64.0, 15.0/64.0, 6.0/64.0, 1.0/64.0};
+double distanceBuffer[KERNAL_SIZE] = {0.0};
+double filterKernal[KERNAL_SIZE] = {0.000244140625, 0.0029296875, 0.01611328125, 0.0537109375, 0.120849609375, 0.193359375, 0.2255859375, 0.193359375, 0.120849609375, 0.0537109375, 0.01611328125, 0.0029296875, 0.000244140625};
 int nextPos = 3;
 
 void setup()
@@ -69,13 +75,13 @@ double applyFilter(float nextDistance) {
   distanceBuffer[nextPos] = nextDistance;
 
   double sum = 0.0;
-  for (int i = 0; i < 7; i++) {
-    int disti = modp(nextPos + i + 1, 7);
+  for (int i = 0; i < KERNAL_SIZE; i++) {
+    int disti = modp(nextPos + i + 1, KERNAL_SIZE);
     sum += distanceBuffer[disti] * filterKernal[i];
   }
 
   // increment for next time
-  nextPos = modp(nextPos + 1, 7);
+  nextPos = modp(nextPos + 1, KERNAL_SIZE);
   return sum;
 }
 
@@ -114,7 +120,7 @@ void loop()
     }
 
     cbi (TIMSK2,TOIE2);              // disble Timer2 Interrupt
-    tword_m=pow(2,32)*dfreq/refclk;  // calulate DDS new tuning word
+    tword_m = pow(2,32) * dfreq / refclk;  // calulate DDS new tuning word
     sbi (TIMSK2,TOIE2);              // enable Timer2 Interrupt 
 
     Serial.print(dfreq);
@@ -149,8 +155,8 @@ void Setup_timer2() {
 // FOUT = (M (REFCLK)) / (2 exp 32)
 // runtime : 8 microseconds ( inclusive push and pop)
 ISR(TIMER2_OVF_vect) {
-  phaccu=phaccu+tword_m; // soft DDS, phase accu with 32 bits
-  icnt=phaccu >> 24;     // use upper 8 bits for phase accu as frequency information
+  phaccu = phaccu + tword_m; // soft DDS, phase accumulator with 32 bits
+  icnt = phaccu >> 24;     // use upper 8 bits for phase accumulator as frequency information
                          // read value fron ROM sine table and send to PWM DAC
-  OCR2A=pgm_read_byte_near(sine256 + icnt);
+  OCR2A = pgm_read_byte_near(sine256 + icnt);
 }
