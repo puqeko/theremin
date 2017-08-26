@@ -10,10 +10,15 @@
  * Editied 26/08/2017
  */
 
-#include "avr/pgmspace.h"
+ // Research
+// http://www.analog.com/en/analog-dialogue/articles/all-about-direct-digital-synthesis.html
+// https://see.stanford.edu/materials/lsoftaee261/book-fall-07.pdf
+// http://hyperphysics.phy-astr.gsu.edu/hbase/Music/flutew.html#c3
+
+#include <avr/pgmspace.h>
 #include <math.h>
 
-// 256 sine values, one sine period, stored in flash memory
+// 256 sine values, one sine period, stored in flash memory (save dynamic memory space)
 const PROGMEM  unsigned char sine256[]  = {
   127,130,133,136,139,143,146,149,152,155,158,161,164,167,170,173,176,178,181,184,187,190,192,
   195,198,200,203,205,208,210,212,215,217,219,221,223,225,227,229,231,233,234,236,238,239,240,
@@ -26,12 +31,12 @@ const PROGMEM  unsigned char sine256[]  = {
   10,11,12,14,15,16,18,20,21,23,25,27,29,31,33,35,37,39,42,44,46,49,51,54,56,59,62,64,67,
   70,73,76,78,81,84,87,90,93,96,99,102,105,108,111,115,118,121,124
 };
-#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
-#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#define clearBit(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+#define setBit(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
 double frequency = 0.0;
 // const double refclk=31372.549;  // =16MHz / 510
-const double refclk=31376.6;      // measured
+const double refclk = 31376.6;      // measured
 
 // variables used inside interrupt service declared as voilatile
 volatile byte icnt;              // var inside interrupt
@@ -59,8 +64,8 @@ void setup()
   Setup_timer2();
 
   // disable interrupts to avoid timing distortion
-  cbi (TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
-  sbi (TIMSK2,TOIE2);              // enable Timer2 Interrupt
+  clearBit (TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
+  setBit (TIMSK2,TOIE2);              // enable Timer2 Interrupt
 
   tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word 
 }
@@ -114,13 +119,13 @@ void loop()
     if (smoothDistance > MAX_ULTRASONIC_DISTANCE) {
       frequency = 0;
     } else {
-      frequency  smoothDistance * 50.0 - 50;  // shift and scale
+      frequency = smoothDistance * 50.0 - 50;  // shift and scale
       frequency = min(frequency, MAX_OUTPUT_FREQENCY);
     }
 
-    cbi (TIMSK2,TOIE2);              // disble Timer2 Interrupt
+    clearBit (TIMSK2,TOIE2);              // disble Timer2 Interrupt
     tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word
-    sbi (TIMSK2,TOIE2);              // enable Timer2 Interrupt 
+    setBit (TIMSK2,TOIE2);              // enable Timer2 Interrupt 
 
     Serial.print(frequency);
     Serial.print("  ");
@@ -136,17 +141,18 @@ void loop()
 void Setup_timer2() {
 
 // Timer2 Clock Prescaler to : 1
-  sbi (TCCR2B, CS20);
-  cbi (TCCR2B, CS21);
-  cbi (TCCR2B, CS22);
+  setBit (TCCR2B, CS20);
+  clearBit (TCCR2B, CS21);
+  clearBit (TCCR2B, CS22);
 
   // Timer2 PWM Mode set to Phase Correct PWM
-  cbi (TCCR2A, COM2A0);  // clear Compare Match
-  sbi (TCCR2A, COM2A1);
+  clearBit (TCCR2A, COM2A0);  // clear Compare Match
+  setBit (TCCR2A, COM2A1);
 
-  sbi (TCCR2A, WGM20);  // Mode 1  / Phase Correct PWM
-  cbi (TCCR2A, WGM21);
-  cbi (TCCR2B, WGM22);
+  // phase correct vs freqency correct?
+  setBit (TCCR2A, WGM20);  // Mode 1  / Phase Correct PWM
+  clearBit (TCCR2A, WGM21);
+  clearBit (TCCR2B, WGM22);
 }
 
 //******************************************************************
