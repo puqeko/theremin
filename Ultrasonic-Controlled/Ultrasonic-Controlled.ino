@@ -29,14 +29,14 @@ const PROGMEM  unsigned char sine256[]  = {
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
-double dfreq = 0.0;
+double frequency = 0.0;
 // const double refclk=31372.549;  // =16MHz / 510
 const double refclk=31376.6;      // measured
 
 // variables used inside interrupt service declared as voilatile
 volatile byte icnt;              // var inside interrupt
-volatile unsigned long phaccu;   // phase accumulator
-volatile unsigned long tword_m;  // dds tuning word m
+volatile uint32_t phaccu;   // phase accumulator
+volatile uint32_t tword_m;  // dds tuning word m
 
 #define echoPin 7   // Echo Pin
 #define trigPin 8   // Trigger Pin
@@ -62,7 +62,7 @@ void setup()
   cbi (TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
   sbi (TIMSK2,TOIE2);              // enable Timer2 Interrupt
 
-  tword_m=pow(2,32)*dfreq/refclk;  // calulate DDS new tuning word 
+  tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word 
 }
 
 // true modulus, result is allways a positive int
@@ -107,29 +107,28 @@ double distance = 0.0;  // Duration used to calculate distance
 
 void loop()
 {
-  while(1) {
-    
     distance = getUltrasonicDistance();
     double smoothDistance = applyFilter(distance);
     
-    // dfreq 0 -> 1000 Hz
+    // frequency 0 -> 1000 Hz
     if (smoothDistance > MAX_ULTRASONIC_DISTANCE) {
-      dfreq = 0;
+      frequency = 0;
     } else {
-      dfreq  smoothDistance * 50.0 - 50;  // shift and scale
-      dfreq = min(dfreq, MAX_OUTPUT_FREQENCY);
+      frequency  smoothDistance * 50.0 - 50;  // shift and scale
+      frequency = min(frequency, MAX_OUTPUT_FREQENCY);
     }
 
     cbi (TIMSK2,TOIE2);              // disble Timer2 Interrupt
-    tword_m = pow(2,32) * dfreq / refclk;  // calulate DDS new tuning word
+    tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word
     sbi (TIMSK2,TOIE2);              // enable Timer2 Interrupt 
 
-    Serial.print(dfreq);
+    Serial.print(frequency);
     Serial.print("  ");
     Serial.print(smoothDistance);
     Serial.print("  ");
     Serial.println(distance);
-  }
+
+    delay(10);  // prevent lock up
  }
 
 // timer2 setup
