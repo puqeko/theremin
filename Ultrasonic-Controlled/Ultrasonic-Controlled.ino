@@ -34,6 +34,7 @@ double dfreq = 0.0;
 const double refclk=31376.6;      // measured
 
 // variables used inside interrupt service declared as voilatile
+volatile byte icnt;              // var inside interrupt
 volatile unsigned long phaccu;   // phase accumulator
 volatile unsigned long tword_m;  // dds tuning word m
 
