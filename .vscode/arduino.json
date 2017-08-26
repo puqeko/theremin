@@ -1,0 +1,5 @@
+{
+    "port": "/dev/cu.usbmodem1421",
+    "board": "arduino:avr:uno",
+    "sketch": "Freqency-Test/Freqency-Test.ino"
+}
