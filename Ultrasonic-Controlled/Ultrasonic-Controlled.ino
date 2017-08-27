@@ -14,6 +14,9 @@
 // http://www.analog.com/en/analog-dialogue/articles/all-about-direct-digital-synthesis.html
 // https://see.stanford.edu/materials/lsoftaee261/book-fall-07.pdf
 // http://hyperphysics.phy-astr.gsu.edu/hbase/Music/flutew.html#c3
+// http://interface.khm.de/index.php/lab/interfaces-advanced/theremin-as-a-capacitive-sensing-device/
+// https://www.dataq.com/data-acquisition/general-education-tutorials/fft-fast-fourier-transform-waveform-analysis.html
+// Datasheet: http://www.atmel.com/Images/Atmel-42735-8-bit-AVR-Microcontroller-ATmega328-328P_Datasheet.pdf
 
 #include <avr/pgmspace.h>
 #include <math.h>
