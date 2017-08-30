@@ -87,7 +87,7 @@ int modp(int a, int b) {
 // apply filter kernal to distance data (i.e. smooth the data)
 double applyFilter(float nextDistance) {
   // update newest value
-  distanceBuffer[nextPos] = nextDistance;
+  distanceBuffer[nextPos] = min(nextDistance, 130);  // stop rediculous readings creating spikes
 
   double sum = 0.0;
   for (int i = 0; i < KERNAL_SIZE; i++) {
@@ -132,17 +132,18 @@ void loop()
       frequency = min(frequency, MAX_OUTPUT_FREQENCY);
     }
 
+
     clearBit (TIMSK2,TOIE2);              // disble Timer2 Interrupt
     tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word
     setBit (TIMSK2,TOIE2);              // enable Timer2 Interrupt 
 
-    Serial.print(frequency);
-    Serial.print("  ");
+    // Serial.print(frequency);
+    // Serial.print("  ");
     Serial.print(smoothDistance);
     Serial.print("  ");
     Serial.println(distance);
 
-    //delay(10);  // prevent lock up
+    delay(10);  // prevent lock up
  }
 
 // timer2 setup

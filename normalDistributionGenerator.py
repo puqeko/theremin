@@ -27,6 +27,8 @@ for i in range(1, table_size):
 
 
 # print sequence
+print("{", end='')
 for i in range(table_size):
-    print(table[table_size - i - 1][i] / total, end=' ')
+    print(table[table_size - i - 1][i] / total, end=', ' if i != table_size - 1 else '')
+print("}")
 print()
