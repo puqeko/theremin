@@ -8,6 +8,12 @@
  * Academy of Media Arts Cologne
  * 
  * Editied 26/08/2017
+ * 
+ * Plug:
+ * -> Vcc into 5v
+ * -> Gnd into grd
+ * -> Echo into Pin 7
+ * -> Trig into Pin 8
  */
 
  // Research
@@ -60,9 +66,9 @@ void setup()
   Serial.begin(115200);        // connect to the serial port
   Serial.println("DDS Test");
 
-  pinMode(8, OUTPUT);      // sets the digital pin as output
-  pinMode(7, INPUT);      // sets the digital pin as output
-  pinMode(11, OUTPUT);     // pin11= PWM  output / frequency output
+  pinMode(trigPin, OUTPUT);      // sets the digital pin as output
+  pinMode(echoPin, INPUT);      // sets the digital pin as output
+  pinMode(PWMPin, OUTPUT);     // pin11= PWM  output / frequency output
 
   Setup_timer2();
 
@@ -136,7 +142,7 @@ void loop()
     Serial.print("  ");
     Serial.println(distance);
 
-    delay(10);  // prevent lock up
+    //delay(10);  // prevent lock up
  }
 
 // timer2 setup
