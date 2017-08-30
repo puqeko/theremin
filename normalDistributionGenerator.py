@@ -18,12 +18,15 @@ for i in range(table_size):
 
 # total or cross diagonals so that we can normalise values
 total = 1 + 1  # for the bounding 1's
+peak = -1
 for i in range(1, table_size):
     for j in range(1, table_size - i):
         table[i][j] = table[i - 1][j] + table[i][j - 1]
 
         if table_size - i - 1 == j:
             total += table[i][j]
+            if i == j:
+                peak = table[i][j]
 
 
 # print sequence
@@ -31,4 +34,5 @@ print("{", end='')
 for i in range(table_size):
     print(table[table_size - i - 1][i] / total, end=', ' if i != table_size - 1 else '')
 print("}")
-print()
+print("Min:", 1/total)
+print("Max:", peak/total)

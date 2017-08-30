@@ -55,11 +55,16 @@ volatile uint32_t tword_m;  // dds tuning word m
 #define echoPin 7   // Echo Pin
 #define trigPin 8   // Trigger Pin
 #define PWMPin 11   // PWM Output
-#define KERNAL_SIZE 13
+#define KERNAL_SIZE 33
+
+#define MAX_RELYABLE_DISTANCE 120.0  // stop extreme readings from ultrasonics
+#define MAX_ULTRASONIC_DISTANCE 95  // in cm
+#define MAX_OUTPUT_FREQENCY 1500.0
 
 double distanceBuffer[KERNAL_SIZE] = {0.0};
-double filterKernal[KERNAL_SIZE] = {0.000244140625, 0.0029296875, 0.01611328125, 0.0537109375, 0.120849609375, 0.193359375, 0.2255859375, 0.193359375, 0.120849609375, 0.0537109375, 0.01611328125, 0.0029296875, 0.000244140625};
+double filterKernal[KERNAL_SIZE] = {2.3283064365386963e-10, 7.450580596923828e-09, 1.1548399925231934e-07, 1.1548399925231934e-06, 8.372589945793152e-06, 4.688650369644165e-05, 0.00021098926663398743, 0.000783674418926239, 0.002448982559144497, 0.0065306201577186584, 0.015020426362752914, 0.03004085272550583, 0.0525714922696352, 0.08087921887636185, 0.10976465418934822, 0.13171758502721786, 0.13994993409141898, 0.13171758502721786, 0.10976465418934822, 0.08087921887636185, 0.0525714922696352, 0.03004085272550583, 0.015020426362752914, 0.0065306201577186584, 0.002448982559144497, 0.000783674418926239, 0.00021098926663398743, 4.688650369644165e-05, 8.372589945793152e-06, 1.1548399925231934e-06, 1.1548399925231934e-07, 7.450580596923828e-09, 2.3283064365386963e-10};
 int nextPos = 3;
+
 
 void setup()
 {
@@ -73,10 +78,13 @@ void setup()
   Setup_timer2();
 
   // disable interrupts to avoid timing distortion
-  clearBit (TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
+  //clearBit (TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
   setBit (TIMSK2,TOIE2);              // enable Timer2 Interrupt
 
-  tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word 
+  tword_m = pow(2,32) * frequency / refclk;  // calulate DDS new tuning word
+
+  // so that there is no transient sound on startup, initalise to max value
+  for (int i = 0; i < KERNAL_SIZE; distanceBuffer[i++] = MAX_RELYABLE_DISTANCE);
 }
 
 // true modulus, result is allways a positive int
@@ -87,7 +95,7 @@ int modp(int a, int b) {
 // apply filter kernal to distance data (i.e. smooth the data)
 double applyFilter(float nextDistance) {
   // update newest value
-  distanceBuffer[nextPos] = min(nextDistance, 130);  // stop rediculous readings creating spikes
+  distanceBuffer[nextPos] = nextDistance;
 
   double sum = 0.0;
   for (int i = 0; i < KERNAL_SIZE; i++) {
@@ -112,19 +120,16 @@ double getUltrasonicDistance() {
   // the time until a pulse is received from the echo pin
   unsigned long duration = pulseIn(echoPin, HIGH);
   
-  return duration / 58.2; // conversion of time to distance (in cm)
+  return min(duration / 58.2, MAX_RELYABLE_DISTANCE); // conversion of time to distance (in cm)
+  // clip to MAX_RELYABLE_DISTANCE cm to stop extreme readings
 }
-
-double distance = 0.0;  // Duration used to calculate distance
-#define MAX_ULTRASONIC_DISTANCE 100  // in cm
-#define MAX_OUTPUT_FREQENCY 1500.0
 
 void loop()
 {
-    distance = getUltrasonicDistance();
+    double distance = getUltrasonicDistance();
     double smoothDistance = applyFilter(distance);
     
-    // frequency 0 -> 1000 Hz
+    // frequency 0 -> ~1000 Hz
     if (smoothDistance > MAX_ULTRASONIC_DISTANCE) {
       frequency = 0;
     } else {
@@ -139,9 +144,9 @@ void loop()
 
     // Serial.print(frequency);
     // Serial.print("  ");
-    Serial.print(smoothDistance);
+    Serial.print(distance);
     Serial.print("  ");
-    Serial.println(distance);
+    Serial.println(smoothDistance);
 
     delay(10);  // prevent lock up
  }
