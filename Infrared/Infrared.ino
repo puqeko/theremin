@@ -52,27 +52,23 @@ volatile byte icnt;              // var inside interrupt
 volatile uint32_t phaccu;   // phase accumulator
 volatile uint32_t tword_m;  // dds tuning word m
 
-#define echoPin 7   // Echo Pin
-#define trigPin 8   // Trigger Pin
+#define inputPin A0   // Echo Pin
 #define PWMPin 11   // PWM Output
-#define KERNAL_SIZE 33
+#define KERNAL_SIZE 23
 
 #define MAX_RELYABLE_DISTANCE 120.0  // stop extreme readings from ultrasonics
 #define MAX_ULTRASONIC_DISTANCE 100.0  // in cm
 #define MAX_OUTPUT_FREQENCY 1500.0
 
 double distanceBuffer[KERNAL_SIZE] = {0.0};
-double filterKernal[KERNAL_SIZE] = {2.3283064365386963e-10, 7.450580596923828e-09, 1.1548399925231934e-07, 1.1548399925231934e-06, 8.372589945793152e-06, 4.688650369644165e-05, 0.00021098926663398743, 0.000783674418926239, 0.002448982559144497, 0.0065306201577186584, 0.015020426362752914, 0.03004085272550583, 0.0525714922696352, 0.08087921887636185, 0.10976465418934822, 0.13171758502721786, 0.13994993409141898, 0.13171758502721786, 0.10976465418934822, 0.08087921887636185, 0.0525714922696352, 0.03004085272550583, 0.015020426362752914, 0.0065306201577186584, 0.002448982559144497, 0.000783674418926239, 0.00021098926663398743, 4.688650369644165e-05, 8.372589945793152e-06, 1.1548399925231934e-06, 1.1548399925231934e-07, 7.450580596923828e-09, 2.3283064365386963e-10};
+double filterKernal[KERNAL_SIZE] = {2.842170943040401e-14, 1.2789769243681803e-12, 2.8137492336099967e-11, 4.0330405681743287e-10, 4.234692596583045e-09, 3.472447929198097e-08, 2.3149652861320646e-07, 1.2897663737021503e-06, 6.126390275085214e-06, 2.518627113090588e-05, 9.067057607126117e-05, 0.00028849728749946735, 0.0008174089812484908, 0.002074961260092323, 0.004742768594496738, 0.009801721761959925, 0.01837822830367486, 0.031351095341562996, 0.048768370531320215, 0.06930242128134978, 0.09009314766575471, 0.10725374722113656, 0.11700408787760352};
 int nextPos = 3;
-
 
 void setup()
 {
-  Serial.begin(115200);        // connect to the serial port
+  Serial.begin(57600);        // connect to the serial port
   Serial.println("DDS Test");
 
-  pinMode(trigPin, OUTPUT);      // sets the digital pin as output
-  pinMode(echoPin, INPUT);      // sets the digital pin as output
   pinMode(PWMPin, OUTPUT);     // pin11= PWM  output / frequency output
 
   Setup_timer2();
@@ -100,7 +96,7 @@ double applyFilter(float nextDistance) {
   double sum = 0.0;
   for (int i = 0; i < KERNAL_SIZE; i++) {
     int disti = modp(nextPos + i + 1, KERNAL_SIZE);
-    sum += distanceBuffer[disti] * filterKernal[i];
+    sum += distanceBuffer[disti] * filterKernal[i] * 2;
   }
 
   // increment for next time
@@ -108,34 +104,24 @@ double applyFilter(float nextDistance) {
   return sum;
 }
 
-// get distance in cm to object
-double getUltrasonicDistance() {
-  // send pulse to ultrasonic sensor
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2); 
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10); 
-  digitalWrite(trigPin, LOW);
-
-  // the time until a pulse is received from the echo pin
-  unsigned long duration = pulseIn(echoPin, HIGH);
-  
-  return min(duration / 58.2, MAX_RELYABLE_DISTANCE); // conversion of time to distance (in cm)
-  // clip to MAX_RELYABLE_DISTANCE cm to stop extreme readings
-}
-
 void loop()
 {
-    double distance = getUltrasonicDistance();
+    double distance = MAX_OUTPUT_FREQENCY - (analogRead(inputPin) / 600.0 * MAX_OUTPUT_FREQENCY);
     double smoothDistance = applyFilter(distance);
-    
-    // frequency 0 -> ~1000 Hz
-    if (smoothDistance > MAX_ULTRASONIC_DISTANCE) {
+
+    if (distance > 1200) {
       frequency = 0;
     } else {
-      frequency = smoothDistance * 50.0 - 50;  // shift and scale
-      frequency = min(frequency, MAX_OUTPUT_FREQENCY);
+      frequency = smoothDistance;
     }
+    
+    // // frequency 0 -> ~1000 Hz
+    // if (smoothDistance > MAX_ULTRASONIC_DISTANCE) {
+    //   frequency = 0;
+    // } else {
+    //   frequency = smoothDistance * 50.0 - 50;  // shift and scale
+    //   frequency = min(frequency, MAX_OUTPUT_FREQENCY);
+    // }
 
 
     clearBit (TIMSK2,TOIE2);              // disble Timer2 Interrupt
