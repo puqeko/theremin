@@ -12,6 +12,7 @@
 
  */
  #include <Stdio.h>
+ #include <math.h>
  #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
  #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
  
@@ -74,6 +75,9 @@
  int tune;
  
  int cnt=0;
+ float voltageOut;
+ float minFreq = 31250.00;
+ float maxFreq = 31700.00;
  
  void loop()
  {
@@ -113,16 +117,27 @@
    if (cal > cal_max) cal_max=cal;
  
    digitalWrite(pinLed,1);  // let LED blink
-   Serial.print(cnt);
-   Serial.print("  "); 
+//   Serial.print(cnt);
+//   Serial.print("  "); 
  
    if ( tune < 0) tune*=-1;  // absolute value
-    sprintf(st1, " %04d",tune);
-   Serial.print(st1);
-   Serial.print("  "); 
+  //  sprintf(st1, " %04d",tune);
+//   Serial.print(st1);
+//   Serial.print("  "); 
  
-   Serial.print(freq_in);
-   Serial.print("  ");
+   //convert frequency to voltage range 0 - 5V
+   
+   if ( freq_in > maxFreq) {
+    maxFreq = freq_in;
+   }
+   if ( freq_in < minFreq) {
+    minFreq = freq_in;
+   }
+   voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq);
+   Serial.print(voltageOut);
+   //Serial.print("  ");
+   //Serial.print(freq_in);
+   //Serial.print("  ");
  /*
    Serial.print(freq_zero);
    Serial.print("  ");
