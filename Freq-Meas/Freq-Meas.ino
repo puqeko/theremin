@@ -78,6 +78,8 @@
  float voltageOut;
  float minFreq = 31250.00;
  float maxFreq = 31700.00;
+ float absMinFreq = 31000.00;
+ float absMaxFreq = 31800.00;
  
  void loop()
  {
@@ -127,10 +129,10 @@
  
    //convert frequency to voltage range 0 - 5V
    
-   if ( freq_in > maxFreq) {
+   if (( freq_in > maxFreq) && (freq_in < absMaxFreq)) {
     maxFreq = freq_in;
    }
-   if ( freq_in < minFreq) {
+   if (( freq_in < minFreq) && (freq_in > absMinFreq)) {
     minFreq = freq_in;
    }
    voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq);
