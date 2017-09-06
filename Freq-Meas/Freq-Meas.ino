@@ -76,10 +76,10 @@
  
  int cnt=0;
  float voltageOut;
- float minFreq = 31250.00;
- float maxFreq = 31700.00;
- float absMinFreq = 31000.00;
- float absMaxFreq = 31800.00;
+ float minFreq = 30600.00;
+ float maxFreq = 31360.00;
+ float absMinFreq = 30550.00;
+ float absMaxFreq = 31400.00;
  
  void loop()
  {
@@ -135,11 +135,14 @@
    if (( freq_in < minFreq) && (freq_in > absMinFreq)) {
     minFreq = freq_in;
    }
+   freq_in = min(freq_in, maxFreq);
+   freq_in = max(freq_in, minFreq);
+
    voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq);
    Serial.print(voltageOut);
-   //Serial.print("  ");
-   //Serial.print(freq_in);
-   //Serial.print("  ");
+   Serial.print("  ");
+//   Serial.print(freq_in);
+//   Serial.print("  ");
  /*
    Serial.print(freq_zero);
    Serial.print("  ");
