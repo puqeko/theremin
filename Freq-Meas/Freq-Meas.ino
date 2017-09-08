@@ -76,10 +76,17 @@
  
  int cnt=0;
  float voltageOut;
+ float linearVoltage;
  float minFreq = 30600.00;
  float maxFreq = 31360.00;
- float absMinFreq = 30550.00;
- float absMaxFreq = 31400.00;
+ float absMinFreq = 30000.00;
+ float absMaxFreq = 32500.00;
+ float vPinchOff = 3.7;
+
+ float linearize(float voltageOout)
+ {
+  return ((10.0 - voltageOut)/(6*(5.0 - voltageOut))) - (1/3);
+ }
  
  void loop()
  {
@@ -138,11 +145,15 @@
    freq_in = min(freq_in, maxFreq);
    freq_in = max(freq_in, minFreq);
 
-   voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq);
-   Serial.print(voltageOut);
+   voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq) - 0.2; // 0 - 5V output
+   linearVoltage = linearize(voltageOut);
+
+   //Serial.print(voltageOut);
+   //Serial.print("  ");
+   Serial.print(linearVoltage);
    Serial.print("  ");
-//   Serial.print(freq_in);
-//   Serial.print("  ");
+   //Serial.print(freq_in);
+   //Serial.print("  ");
  /*
    Serial.print(freq_zero);
    Serial.print("  ");
