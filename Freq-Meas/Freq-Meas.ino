@@ -17,7 +17,7 @@
  #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
  
  //! Macro that clears all Timer/Counter1 interrupt flags.
- #define CLEAR_ALL_TIMER1_INT_FLAGS    (TIFR1 = TIFR1)
+//  #define CLEAR_ALL_TIMER1_INT_FLAGS    (TIFR1 = TIFR1)
  
  int pinLed = 13;                 // LED connected to digital pin 13
  int pinFreq = 5;
@@ -26,14 +26,17 @@
  {
    pinMode(pinLed, OUTPUT);      // sets the digital pin as output
    pinMode(pinFreq, INPUT);
-   pinMode(8, OUTPUT);
- 
-   Serial.begin(57600);        // connect to the serial port
+   pinMode(6, OUTPUT);
+
+   Serial.begin(115200);        // connect to the serial port
  
    // hardware counter setup ( refer atmega168.pdf chapter 16-bit counter1)
-   TCCR1A=0;                   // reset timer/counter1 control register A
-   TCCR1B=0;                   // reset timer/counter1 control register A
-   TCNT1=0;                    // counter value = 0
+   TCCR1A = 0;                   // reset timer/counter1 control register A
+   TCCR1B = 0;                   // reset timer/counter1 control register A
+   TCNT1 = 0;                    // counter value = 0
+
+   sbi (TIMSK0,TOIE0);
+
    // set timer/counter1 hardware as counter , counts events on pin T1 ( arduino pin 5)
    // normal mode, wgm10 .. wgm13 = 0
    sbi (TCCR1B ,CS10);         // External clock source on T1 pin. Clock on rising edge.
@@ -42,9 +45,9 @@
  
    // timer2 setup / is used for frequency measurement gatetime generation
    // timer 2 presaler set to 256 / timer 2 clock = 16Mhz / 256 = 62500 Hz
-   cbi (TCCR2B ,CS20);
-   sbi (TCCR2B ,CS21);
-   sbi (TCCR2B ,CS22);
+   cbi (TCCR2B, CS20);
+   sbi (TCCR2B, CS21);
+   sbi (TCCR2B, CS22);
  
    //set timer2 to CTC Mode
    cbi (TCCR2A ,WGM20);
@@ -55,7 +58,6 @@
    // interrupt control
  
    sbi (TIMSK2,OCIE2A);          // enable Timer2 Interrupt
- 
  }
  
  volatile byte i_tics;
@@ -77,15 +79,15 @@
  int cnt=0;
  float voltageOut;
  float linearVoltage;
- float minFreq = 30600.00;
- float maxFreq = 31360.00;
- float absMinFreq = 30000.00;
- float absMaxFreq = 32500.00;
+ float minFreq = 27000.0;//30600.00;
+ float maxFreq = 28750.0;//31360.00;
+ float absMinFreq = 27000.0;//30000.00;
+ float absMaxFreq = 28750.0;//32500.00;
  float vPinchOff = 3.7;
 
- float linearize(float voltageOout)
+ float linearize(float voltageOut)
  {
-  return ((10.0 - voltageOut)/(6*(5.0 - voltageOut))) - (1/3);
+  return ((10.0 - voltageOut) / (6 * (5.0 - voltageOut))) - (1 / 3);
  }
  
  void loop()
@@ -145,14 +147,21 @@
    freq_in = min(freq_in, maxFreq);
    freq_in = max(freq_in, minFreq);
 
-   voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq) - 0.2; // 0 - 5V output
+   voltageOut = 5 * (freq_in - minFreq)/(maxFreq - minFreq) - 0.2; // 0 - 5V output
    linearVoltage = linearize(voltageOut);
+   float controlVoltage = linearVoltage / 5.0 * 1.5 + 1.5;
+   controlVoltage = controlVoltage / 5.0 * 255.0;
 
+  //  if (true) {//freq_in == minFreq) {
+  //    controlVoltage = 0;
+  //  }
+
+   analogWrite(6, (int) controlVoltage);
    //Serial.print(voltageOut);
    //Serial.print("  ");
    Serial.print(linearVoltage);
    Serial.print("  ");
-   //Serial.print(freq_in);
+   Serial.print(freq_in);
    //Serial.print("  ");
  /*
    Serial.print(freq_zero);
@@ -170,7 +179,7 @@
    sbi (GTCCR,PSRASY);              // reset presacler counting
    TCNT2=0;                         // timer2=0
    TCNT1=0;                         // Counter1 = 0
-   cbi (TIMSK0,TOIE0);              // dissable Timer0 again // millis and delay
+   //cbi (TIMSK0,TOIE0);              // dissable Timer0 again // millis and delay
    sbi (TIMSK2,OCIE2A);             // enable Timer2 Interrupt
    TCCR1B = TCCR1B | 7;             //  Counter Clock source = pin T1 , start counting now
  }
@@ -186,7 +195,7 @@
                              // end of gate time, measurement ready
      TCCR1B = TCCR1B & ~7;   // Gate Off  / Counter T1 stopped
      cbi (TIMSK2,OCIE2A);    // disable Timer2 Interrupt
-     sbi (TIMSK0,TOIE0);     // ensable Timer0 again // millis and delay
+     //sbi (TIMSK0,TOIE0);     // ensable Timer0 again // millis and delay
      f_ready=1;              // set global flag for end count period
  
                              // calculate now frequeny value
