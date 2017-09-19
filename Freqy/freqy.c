@@ -1,4 +1,4 @@
-// Freqy - freqency measurment on Arduino Uno.
+// Freqy.c - Freqency measurment on Arduino Uno.
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
 //
@@ -19,6 +19,12 @@ void initFreqy()
 
 // Return the measured freqency.
 double getFreqy()
+{
+
+}
+
+// Set output freqency
+void setFreqy()
 {
 
 }
