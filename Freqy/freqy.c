@@ -1,30 +1,28 @@
 // Freqy.c - Freqency measurment on Arduino Uno.
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
-//
-// Use one timer as a reference, then check the count of the clocked timer every sampleTimeMSecs
 
+#include "freqy.h"
+
+// Use one timer as a reference, then check the count of the clocked timer every sampleTimeMSecs
 long measuredFreqency = 0;
 int sampleTimeMSecs = 100;  // time between sampleTimeMSecs
 
 // Setup registers and initalise values. Called once in setup.
-void initFreqy()
+void init_freqy()
 {
-    // Pin T1, rising edge triggers counter from external clock
-    SET_BITS(REGISTER_T1_CTRL_B, CS10 | CS11 | CS12);
-
-    SET_BITS(REGISTER_T2_CTRL_B, CS21 | CS22);
-    CLR_BITS(REGISTER_T2_CTRL_B, CS20);
+    clear_registers();  // clear timer registers
+    timer_enable_external_clock(TIMER_1); // pin T1 (#5) as sqaure wave input
 }
 
 // Return the measured freqency.
-double getFreqy()
+double get_freqy()
 {
 
 }
 
 // Set output freqency
-void setFreqy()
+void set_freqy()
 {
 
 }

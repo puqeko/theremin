@@ -1,3 +1,7 @@
+// Timers.c
+// 20-09-17
+// Support funtion for using builtin timers.
+
 #include "Timers.h"
 
 void clear_registers()
