@@ -19,7 +19,6 @@
 // Overflow bit
 #define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & JOIN(TOV, timer,,))
 #define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), JOIN(TOV, timer,,))
-#define timer_enable_overflow(timer) SET_BITS(JOIN(TIMSK, timer,,), JOIN(TOIE, timer,,))
 
 // Prescalar to divide clock speed
 enum {
@@ -42,6 +41,8 @@ enum {
             JOIN(OCIE, timer, compareLetter,))
 #define timer_disable_interupt(timer, compareLetter) CLR_BITS(JOIN(TIMSK, timer,,),\
             JOIN(OCIE, timer, compareLetter,))
+#define timer_enable_interupt_overflow(timer) SET_BITS(JOIN(TIMSK, timer,,),\
+            JOIN(TOIE, timer,,))
 
 // Ouput compare mode has value from 0 to 3. It specifies how the compare values are to
 // be used. The behaviour of the compare mode depends on the wave generation mode.

@@ -4,6 +4,9 @@
 
 #include "Timers.h"
 
+#define F_CPU 16000000 // 16 megahertz
+#define get_pwm_freqency(prescaler) (F_CPU / (prescaler * 510.0))
+
 void init_freqy();
-void set_freqy();
-double get_freqy();
+void set_input_freqy(float newFreqency);
+double set_output_freqy();
