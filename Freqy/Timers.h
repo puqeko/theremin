@@ -1,18 +1,67 @@
-#include <stdbool.h>
+// Timers.h
+//
+// Here be automagic...
+// Some defines to help with setting the timer registers on an arduino uno
 
-typedef timer16_t volitile uint16_t
+// set and clear bits
+#define SET_BITS(reg, bits) (reg) |= (bits)
+#define CLR_BITS(reg, bits) (reg) &= ~(bits)
 
-enum TIMER_INTERUPT {
-    TIMER_INTERUPT_ENABLE_COMPARE_A = 0,
-    TIMER_INTERUPT_ENABLE_COMPARE_B,
-    TIMER_INTERUPT_ENABLE_OVERFLOW
+// The uno has three timers
+#define TIMER_0 0
+#define TIMER_1 1
+#define TIMER_2 2
+
+// A helper that joins the values of reg, t, l, n togther for building register names.
+#define JOIN(reg, t, l, n) reg ## t ## l ## n
+
+// Overflow bit
+#define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & JOIN(TOV, timer,,))
+#define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), JOIN(TOV, timer,,))
+#define timer_enable_overflow(timer) SET_BITS(JOIN(TIMSK, timer,,), JOIN(TOIE, timer,,))
+
+// Prescalar to divide clock speed
+enum {
+    TIMER_PRESCALER_NONE = 0x0,
+    TIMER_PRESCALER_1 = 0x1,
+    TIMER_PRESCALER_8 = 0x2,
+    TIMER_PRESCALER_64 = 0x3,
+    TIMER_PRESCALER_256 = 0x4,
+    TIMER_PRESCALER_1024 = 0x5
 };
+#define PRESCALER_MASK 0x7
+#define timer_set_prescaler(timer, prescaler) SET_BITS(JOIN(TCCR, timer, B,), prescaler);\
+                                              CLR_BITS(JOIN(TCCR, timer, B,), ~prescaler & PRESCALER_MASK)
+#define timer_enable_external_clock(timer) timer_set_prescaler(timer, 0x7)  // rising edge
 
-void timer_set_prescaler(TIMER_ID id, uint8_t value);
-void timer_set_mode(TIMER_ID id, uint8_t mode);
-void timer_set_compare_mode(TIMER_ID id, uint_8 mode);
-void timer_set_compare_value(TIMER_ID id, uint16_t compareValue);
-void timer_set_interupt(TIMER_ID id, TIMER_INTERUPT interupt);
-void timer_clear_overflow(TIMER_ID id);
+// There are two compare registiers, A and B. These can be set to values and told
+// to trigger an interupt function when the counter value matches.
+#define timer_set_compare_value(timer, compareLetter, value) JOIN(OCR, timer, compareLetter,) = (value)
+#define timer_enable_interupt(timer, compareLetter) SET_BITS(JOIN(TIMSK, timer,,),\
+            JOIN(OCIE, timer, compareLetter,))
+#define timer_disable_interupt(timer, compareLetter) CLR_BITS(JOIN(TIMSK, timer,,),\
+            JOIN(OCIE, timer, compareLetter,))
 
-bool timer_did_overflow(TIMER_ID id);
+// Ouput compare mode has value from 0 to 3. It specifies how the compare values are to
+// be used. The behaviour of the compare mode depends on the wave generation mode.
+#define timer_set_compare_output_mode(timer, compareLetter, mode) \
+        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 0));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 0));\
+        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 1));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 1))
+
+// Wave generation mode has value from 0 to 7, (or 15 for timer 1 only). It specifies how the
+// clock behaves. Read the manual for details.
+#define timer_set_wavegen_mode(timer, mode) \
+        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 0,));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 0,));\
+        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 1,));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 1,));\
+        if (mode & 0x4) SET_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 2,));\
+        else CLR_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 2,));\
+        if (timer == TIMER_1 && mode & 0x8) SET_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 3,));\
+        else if (timer == TIMER_1) CLR_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 3,))
+
+
+// Initalise registers to zero.
+void clear_registers();
