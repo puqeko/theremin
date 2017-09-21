@@ -4,6 +4,9 @@
 // Here be automagic...
 // Some defines to help with setting the timer registers on an arduino uno
 
+#define F_CPU 16000000 // 16 megahertz
+#define timer_pwm_freqency(prescaler) (F_CPU / (prescaler * 510.0))
+
 // set and clear bits
 #define SET_BITS(reg, bits) (reg) |= (bits)
 #define CLR_BITS(reg, bits) (reg) &= ~(bits)
@@ -68,6 +71,7 @@ enum {
 // Initalise registers to zero.
 void clear_registers();
 
+// REGISTER LAYOUT
 //                    TIMER 0 (System Clock, 8 Bits)
 // ==================================================================
 
