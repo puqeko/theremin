@@ -2,10 +2,14 @@
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
 
-#include "freqy.h"
+#include <avr/pgmspace.h>
+#include <math.h>
 
-static const PROGMEM unsigned char sineTable[] = {
-    127,130,133,136,139,143,146,149,152,155,158,161,164,167,170,173,176,178
+#include "freqy.h"
+#include "timers.h"
+
+const PROGMEM unsigned char sineTable[] = {
+    127,130,133,136,139,143,146,149,152,155,158,161,164,167,170,173,176,178,
     181,184,187,190,192,195,198,200,203,205,208,210,212,215,217,219,221,223,
     225,227,229,231,233,234,236,238,239,240,242,243,244,245,247,248,249,249,
     250,251,252,252,253,253,253,254,254,254,254,254,254,254,253,253,253,252,
@@ -20,7 +24,7 @@ static const PROGMEM unsigned char sineTable[] = {
     115,118,121,124
 };
 
-static const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
+const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
 static uint32_t timeStep = 0;
 static volatile uint32_t phasePosition = 0;
 
@@ -37,8 +41,9 @@ static uint32_t calc_timestep(float signalFreqency)
     // shift value up by 2^24 (i.e. 24 bits) so that we can have
     // sub bit percision when incrimenting time steps. Read off the
     // top 8 bits (32 - 24) to get the realTimeStep back in bits.
-    return (uint32_t)(realTimeStep * (1 << 24));
+    return (uint32_t)(realTimeStep * pow(2, 24));
 }
+
 
 // Setup registers and initalise values. Called once in setup.
 void init_freqy()
@@ -52,7 +57,7 @@ void init_freqy()
     timer_set_prescaler(TIMER_2, TIMER_PRESCALER_1);  // as fast as we can
 
     // Use phase correct PWM with TOP = 0xFF, compare update TOP, overflow when BOTTOM
-    timer_set_wavegen_mode(TIMER_2, 0x1);  // use 0x5 for TOP = OCRA
+    timer_set_wavegen_mode(TIMER_2, 0x1);
 
     // Clear OC2A (output compare pin) on Compare Match when up-counting. Set ouput
     // compare pin A on Compare Match when down-counting.
@@ -72,11 +77,6 @@ ISR(TIMER2_OVF_vect) {
     timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
 }
 
-// Return the measured freqency.
-double get_input_freqy()
-{
-
-}
 
 // Set output freqency
 void set_output_freqy(float newFrequency)
