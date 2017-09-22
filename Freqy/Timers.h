@@ -9,7 +9,7 @@
 #ifndef TIMERS_H
 #define TIMERS_H
 
-#define F_CPU 16000000 // 16 megahertz
+#define F_CPU 16000000 // 16 megahertz for the Arduino Uno
 #define timer_pwm_freqency(prescaler) (F_CPU / (prescaler * 510.0))
 
 // set and clear bits
@@ -22,12 +22,19 @@
 #define TIMER_1 1
 #define TIMER_2 2
 
-// A helper that joins the values of reg, t, l, n togther for building register names.
+// max timer values
+#define TIMER0_SIZE 0x100  // 8-bit
+#define TIMER1_SIZE 0x10000  // 16-bit
+#define TIMER2_SIZE 0x100
+
+// A helper that joins the parameters of name, timer, letter, and number togther
+// for building register names from arguments.
 #define JOIN(name, timer, letter, number) name ## timer ## letter ## number
 
 // Overflow bit
 #define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & BIT(JOIN(TOV, timer,,)))
 #define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), BIT(JOIN(TOV, timer,,)))
+
 
 // Prescalar to divide clock speed
 enum {
@@ -42,7 +49,9 @@ enum {
 #define timer_set_prescaler(timer, prescaler) SET_BITS(JOIN(TCCR, timer, B,), prescaler);\
                                               CLR_BITS(JOIN(TCCR, timer, B,), ~prescaler & PRESCALER_MASK)
 #define timer_enable_external_clock(timer) timer_set_prescaler(timer, 0x7)  // rising edge
+#define timer_disable_external_clock(timer) timer_set_prescaler(timer, TIMER_PRESCALER_NONE)
 
+// Compare and interupts
 // There are two compare registiers, A and B. These can be set to values and told
 // to trigger an interupt function when the counter value matches.
 #define timer_set_compare_value(timer, compareLetter, value) JOIN(OCR, timer, compareLetter,) = (value)
@@ -61,7 +70,8 @@ enum {
         if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 1)));\
         else CLR_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 1)))
 
-// Wave generation mode has value from 0 to 7, (or 15 for timer 1 only). It specifies how the
+// Wave Generation
+// Wave generation mode has a value from 0 to 7, (or 15 for timer 1 only). It specifies how the
 // clock behaves. Read the manual for details.
 #define WGM23 0
 #define WGM03 0  // fix compile errors
@@ -161,9 +171,9 @@ extern void clear_registers();
 // #define REGISTER_TIMER2_CTRL_B TCCR2B
 
 // // Counter values
-// #define REGISTER_TIMER0_COUNTER_VALUE TCNT0  // 8 bit
-// #define REGISTER_TIMER1_COUNTER_VALUE TCNT1  // 16 bit
-// #define REGISTER_TIMER2_COUNTER_VALUE TCNT2  // 8 bit
+#define REGISTER_TIMER0_COUNTER_VALUE TCNT0  // 8 bit
+#define REGISTER_TIMER1_COUNTER_VALUE TCNT1  // 16 bit
+#define REGISTER_TIMER2_COUNTER_VALUE TCNT2  // 8 bit
 
 // // Register to compare counter values with
 // #define REGISTER_TIMER0_OUTPUT_COMPARE OCR0A  // pin OC0A

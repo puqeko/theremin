@@ -87,70 +87,8 @@
    // add=analogRead(0);
  
    f_meter_start();
- 
-   tune=tune+1;
-   while (f_ready==0) {            // wait for period length end (100ms) by interrupt
-     PORTB=((dds+=tune) >> 15);    // kind of DDS tonegenerator / connect speaker to portb.0 = arduino pin8
-   }
-  tune = freq_in-freq_zero;
-  // use the tune value here for your own purposes like control of servos, midi etc.
- 
-   // startup
-   if (cnt==10) {
-     freq_zero=freq_in;
-     freq_cal=freq_in;
-     cal_max=0;
-     Serial.print("** START **");
-   }
- 
-   // autocalibration
-   if (cnt % 20 == 0) {   // try autocalibrate after n cycles
-     Serial.print("*");
-     if (cal_max <= 2) {
-       freq_zero=freq_in;
-       Serial.print(" calibration");
-     }
-     freq_cal=freq_in;
-     cal_max=0;
-     Serial.println("");
-   }
-   cal = freq_in-freq_cal;
-   if ( cal < 0) cal*=-1;  // absolute value
-   if (cal > cal_max) cal_max=cal;
- 
-   digitalWrite(pinLed,1);  // let LED blink
-//   Serial.print(cnt);
-//   Serial.print("  "); 
- 
-   if ( tune < 0) tune*=-1;  // absolute value
-  //  sprintf(st1, " %04d",tune);
-//   Serial.print(st1);
-//   Serial.print("  "); 
- 
-   //convert frequency to voltage range 0 - 5V
+   while (f_ready == 0);            // wait for period length end (100ms) by interrupt
    
-   if (( freq_in > maxFreq) && (freq_in < absMaxFreq)) {
-    maxFreq = freq_in;
-   }
-   if (( freq_in < minFreq) && (freq_in > absMinFreq)) {
-    minFreq = freq_in;
-   }
-   freq_in = min(freq_in, maxFreq);
-   freq_in = max(freq_in, minFreq);
-
-   voltageOut = 5*(freq_in - minFreq)/(maxFreq - minFreq);
-   Serial.print(voltageOut);
-   Serial.print("  ");
-//   Serial.print(freq_in);
-//   Serial.print("  ");
- /*
-   Serial.print(freq_zero);
-   Serial.print("  ");
-   Serial.print(cal_max);
- */
-   Serial.println("");
-   digitalWrite(pinLed,0);
- 
  }
  //******************************************************************
  void f_meter_start() {
@@ -179,7 +117,7 @@
      f_ready=1;              // set global flag for end count period
  
                              // calculate now frequeny value
-     freq_in=0x10000 * mlt;  // mukt #ovverflows by 65636
+     freq_in=0x10000 * mlt;  // mult #overflows by 65636
      freq_in += TCNT1;       // add counter1 value
      mlt=0;
  

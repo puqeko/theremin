@@ -1,6 +1,9 @@
 // Freqy.c - Freqency measurment on Arduino Uno.
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
+//
+// Use PWM to generate a sqaure wave with a sinusoidally varying duty cycle.
+// Putting the signal through a low pass filter will yield a sine wave.
 
 #include <avr/pgmspace.h>
 #include <math.h>
@@ -27,16 +30,23 @@ const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
 static uint32_t timeStep = (uint32_t)4 << 24;  // about 490 Hz by below calculation
 static volatile uint32_t phasePosition = 0;
 
+static volatile uint32_t measuredCount = 0;
+static volatile uint32_t sampleFrequencyTicks = 0;
+static volatile uint8_t numOverflows = 0;
+static bool shouldStartMeasurment = false;
+static bool isMeasuring = false;
+static bool didFinishMeasurment = false;
+
 
 // Setup registers and initalise values. Called once in setup.
 void init_freqy()
 {
+    // Setup timer 2 as PWM generator
     // TIMER_2 has the ouput compare pin (OC2A) which is pin 11
     // The other pin is OC2B on pin 3.
     pinMode(11, OUTPUT);
 
     clear_registers();  // clear timer registers
-    timer_enable_interupt_overflow(TIMER_2);  // enable ISR(TIMER2_OVF_vect)
     timer_set_prescaler(TIMER_2, TIMER_PRESCALER_1);  // as fast as we can
 
     // Use phase correct PWM with TOP = 0xFF, compare update TOP, overflow when BOTTOM
@@ -49,14 +59,58 @@ void init_freqy()
     // compare pin A on Compare Match when down-counting.
     // Change of signal (low->high, or high->low) occures when compare value met.
     timer_set_compare_output_mode(TIMER_2, A, 0x2);
+    
+    timer_enable_interupt_overflow(TIMER_2);  // enable ISR(TIMER2_OVF_vect) below
 }
 
 
-// when counter value for TIMER_2 is zero (at the bottom), then set the next compare
+// Get the most up to date value. Remeasured every 50 ms.
+double get_input_freqy()
+{
+    shouldStartMeasurment = true;
+    sampleFrequencyTicks = numOverflows = 0;
+    REGISTER_TIMER1_COUNTER_VALUE = 0;
+
+    while (!didFinishMeasurment) delay(1);  // wait for measurment
+    didFinishMeasurment = false;
+
+    // freq = num-ticks / period
+    return measuredCount / 0.050011875000000004;
+}
+
+
+// When counter value for TIMER_2 is zero (at the bottom), then set the next compare
 // value from the sine table.
+// This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
 ISR(TIMER2_OVF_vect) {
+    // PWM generator
     phasePosition += timeStep;  // clipped automatically on overflow
     timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
+
+    // Measure timer 1 as counter, use timer 2 as a reference
+    // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
+    if (isMeasuring) {
+        if (sampleFrequencyTicks == 1569) {
+            timer_disable_external_clock(TIMER_1);
+
+            // Count the number of ticks there have been over 50 ms.
+            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE)
+            didFinishMeasurment = true;
+            isMeasuring = false;
+        } else {
+            if (timer_did_overflow(TIMER_1)) {
+                numOverflows++;
+                timer_clear_overflow(TIMER_1);
+            }
+
+            sampleFrequencyTicks++;
+        }
+    } else if (shouldStartMeasurment) {
+        shouldStartMeasurment = false;
+        isMeasuring = true;
+
+        timer_enable_external_clock(TIMER_1);
+    }
 }
 
 
