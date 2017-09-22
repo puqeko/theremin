@@ -35,7 +35,6 @@
 #define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & BIT(JOIN(TOV, timer,,)))
 #define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), BIT(JOIN(TOV, timer,,)))
 
-
 // Prescalar to divide clock speed
 enum {
     TIMER_PRESCALER_NONE = 0x0,
