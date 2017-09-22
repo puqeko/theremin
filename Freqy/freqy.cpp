@@ -23,26 +23,9 @@ const PROGMEM unsigned char sineTable[] = {
     49,51,54,56,59,62,64,67,70,73,76,78,81,84,87,90,93,96,99,102,105,108,111,
     115,118,121,124
 };
-
 const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
-static uint32_t timeStep = 0;
+static uint32_t timeStep = (uint32_t)4 << 24;  // about 490 Hz by below calculation
 static volatile uint32_t phasePosition = 0;
-
-// return a 32 bit number representing the change in time/x/phase required
-// to acheive the desired signalFreqency. The top 8 bits represent the true
-// value, and the remaining lower bits are used for sub bit precision only.
-// Using an integer is required for optimisation of the interupt function.
-static uint32_t calc_timestep(float signalFreqency)
-{
-    // rearrange from signalFreqency = (pwmFreqency / 256) * timeStep
-    // 256 is the length of the sine table
-    float realTimeStep = 256.0 * signalFreqency / pwmFreqency;
-
-    // shift value up by 2^24 (i.e. 24 bits) so that we can have
-    // sub bit percision when incrimenting time steps. Read off the
-    // top 8 bits (32 - 24) to get the realTimeStep back in bits.
-    return (uint32_t)(realTimeStep * pow(2, 24));
-}
 
 
 // Setup registers and initalise values. Called once in setup.
@@ -53,7 +36,7 @@ void init_freqy()
     pinMode(11, OUTPUT);
 
     clear_registers();  // clear timer registers
-    timer_enable_interupt_overflow(TIMER_2);  // enable function below
+    timer_enable_interupt_overflow(TIMER_2);  // enable ISR(TIMER2_OVF_vect)
     timer_set_prescaler(TIMER_2, TIMER_PRESCALER_1);  // as fast as we can
 
     // Use phase correct PWM with TOP = 0xFF, compare update TOP, overflow when BOTTOM
@@ -68,7 +51,9 @@ void init_freqy()
     timer_set_compare_output_mode(TIMER_2, A, 0x2);
 }
 
-// when counter values is zero (BOTTOM).
+
+// when counter value for TIMER_2 is zero (at the bottom), then set the next compare
+// value from the sine table.
 ISR(TIMER2_OVF_vect) {
     phasePosition += timeStep;  // clipped automatically on overflow
     timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
@@ -76,7 +61,18 @@ ISR(TIMER2_OVF_vect) {
 
 
 // Set output freqency
+// Use a 32 bit number representing the change in time/x/phase required
+// to acheive the desired newFrequency. The top 8 bits represent the true
+// value, and the remaining lower bits are used for sub bit precision only.
+// Using an integer is required for optimisation of the interupt function.
 void set_output_freqy(float newFrequency)
 {
-    timeStep = calc_timestep(newFrequency);
+    // rearrange from signalFreqency = (pwmFreqency / 256) * timeStep
+    // 256 is the length of the sine table
+    float realTimeStep = 256.0 * newFrequency / pwmFreqency;
+
+    // shift value up by 2^24 (i.e. 24 bits) so that we can have
+    // sub bit percision when incrimenting time steps. Read off the
+    // top 8 bits (32 - 24) to get the realTimeStep back in bits.
+    timeStep = (uint32_t)(realTimeStep * pow(2, 24));
 }
