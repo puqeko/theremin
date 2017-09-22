@@ -4,10 +4,16 @@
 // Here be automagic...
 // Some defines to help with setting the timer registers on an arduino uno
 
+#include "Arduino.h"
+
+#ifndef TIMERS_H
+#define TIMERS_H
+
 #define F_CPU 16000000 // 16 megahertz
 #define timer_pwm_freqency(prescaler) (F_CPU / (prescaler * 510.0))
 
 // set and clear bits
+#define BIT(bitnumber) (1 << bitnumber)
 #define SET_BITS(reg, bits) (reg) |= (bits)
 #define CLR_BITS(reg, bits) (reg) &= ~(bits)
 
@@ -17,11 +23,11 @@
 #define TIMER_2 2
 
 // A helper that joins the values of reg, t, l, n togther for building register names.
-#define JOIN(reg, t, l, n) reg ## t ## l ## n
+#define JOIN(name, timer, letter, number) name ## timer ## letter ## number
 
 // Overflow bit
-#define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & JOIN(TOV, timer,,))
-#define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), JOIN(TOV, timer,,))
+#define timer_did_overflow(timer) (JOIN(TIFR, timer,,) & BIT(JOIN(TOV, timer,,)))
+#define timer_clear_overflow(timer) CLR_BITS(JOIN(TIFR, timer,,), BIT(JOIN(TOV, timer,,)))
 
 // Prescalar to divide clock speed
 enum {
@@ -41,35 +47,37 @@ enum {
 // to trigger an interupt function when the counter value matches.
 #define timer_set_compare_value(timer, compareLetter, value) JOIN(OCR, timer, compareLetter,) = (value)
 #define timer_enable_interupt(timer, compareLetter) SET_BITS(JOIN(TIMSK, timer,,),\
-            JOIN(OCIE, timer, compareLetter,))
+            BIT(JOIN(OCIE, timer, compareLetter,)))
 #define timer_disable_interupt(timer, compareLetter) CLR_BITS(JOIN(TIMSK, timer,,),\
-            JOIN(OCIE, timer, compareLetter,))
+            BIT(JOIN(OCIE, timer, compareLetter,)))
 #define timer_enable_interupt_overflow(timer) SET_BITS(JOIN(TIMSK, timer,,),\
-            JOIN(TOIE, timer,,))
+            BIT(JOIN(TOIE, timer,,)))
 
 // Ouput compare mode has value from 0 to 3. It specifies how the compare values are to
 // be used. The behaviour of the compare mode depends on the wave generation mode.
 #define timer_set_compare_output_mode(timer, compareLetter, mode) \
-        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 0));\
-        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 0));\
-        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 1));\
-        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(COM, timer, compareLetter, 1))
+        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 0)));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 0)));\
+        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 1)));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(COM, timer, compareLetter, 1)))
 
 // Wave generation mode has value from 0 to 7, (or 15 for timer 1 only). It specifies how the
 // clock behaves. Read the manual for details.
+#define WGM23 0
+#define WGM03 0  // fix compile errors
 #define timer_set_wavegen_mode(timer, mode) \
-        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 0,));\
-        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 0,));\
-        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 1,));\
-        else CLR_BITS(JOIN(TCCR, timer, A,), JOIN(WGM, timer, 1,));\
-        if (mode & 0x4) SET_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 2,));\
-        else CLR_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 2,));\
-        if (timer == TIMER_1 && mode & 0x8) SET_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 3,));\
-        else if (timer == TIMER_1) CLR_BITS(JOIN(TCCR, timer, B,), JOIN(WGM, timer, 3,))
+        if (mode & 0x1) SET_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(WGM, timer, 0,)));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(WGM, timer, 0,)));\
+        if (mode & 0x2) SET_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(WGM, timer, 1,)));\
+        else CLR_BITS(JOIN(TCCR, timer, A,), BIT(JOIN(WGM, timer, 1,)));\
+        if (mode & 0x4) SET_BITS(JOIN(TCCR, timer, B,), BIT(JOIN(WGM, timer, 2,)));\
+        else CLR_BITS(JOIN(TCCR, timer, B,), BIT(JOIN(WGM, timer, 2,)));\
+        if (timer == TIMER_1 && mode & 0x8) SET_BITS(JOIN(TCCR, timer, B,), BIT(JOIN(WGM, timer, 3,)));\
+        else if (timer == TIMER_1) CLR_BITS(JOIN(TCCR, timer, B,), BIT(JOIN(WGM, timer, 3,)))
 
 
 // Initalise registers to zero.
-void clear_registers();
+extern void clear_registers();
 
 // REGISTER LAYOUT
 //                    TIMER 0 (System Clock, 8 Bits)
@@ -160,3 +168,4 @@ void clear_registers();
 // // Register to compare counter values with
 // #define REGISTER_TIMER0_OUTPUT_COMPARE OCR0A  // pin OC0A
 // #define REGISTER_TIMER0_OUTPUT_COMPARE OCR0B  // pin OC0B
+#endif

@@ -2,7 +2,7 @@
 // 20-09-17
 // Support funtion for using builtin timers.
 
-#include "Timers.h"
+#include "timers.h"
 
 void clear_registers()
 {
