@@ -67,9 +67,9 @@ void init_freqy()
 // Get the most up to date value. Remeasured every 50 ms.
 double get_input_freqy()
 {
-    shouldStartMeasurment = true;
     sampleFrequencyTicks = numOverflows = 0;
     REGISTER_TIMER1_COUNTER_VALUE = 0;
+    shouldStartMeasurment = true;
 
     while (!didFinishMeasurment) continue;  // wait for measurment
     didFinishMeasurment = false;
@@ -86,7 +86,7 @@ ISR(TIMER2_OVF_vect) {
     // Measure timer 1 as counter, use timer 2 as a reference
     // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
     if (isMeasuring) {
-        if (sampleFrequencyTicks == 1569) {
+        if (sampleFrequencyTicks >= 1569) {
             timer_disable_external_clock(TIMER_1);
 
             // Count the number of ticks there have been over 50 ms.
