@@ -33,9 +33,9 @@ static volatile uint32_t phasePosition = 0;
 static volatile uint32_t measuredCount = 0;
 static volatile uint32_t sampleFrequencyTicks = 0;
 static volatile uint8_t numOverflows = 0;
-static bool shouldStartMeasurment = false;
-static bool isMeasuring = false;
-static bool didFinishMeasurment = false;
+static volatile bool shouldStartMeasurment = false;
+static volatile bool isMeasuring = false;
+static volatile bool didFinishMeasurment = false;
 
 
 // Setup registers and initalise values. Called once in setup.
@@ -71,7 +71,7 @@ double get_input_freqy()
     sampleFrequencyTicks = numOverflows = 0;
     REGISTER_TIMER1_COUNTER_VALUE = 0;
 
-    while (!didFinishMeasurment) delay(1);  // wait for measurment
+    while (!didFinishMeasurment) continue;  // wait for measurment
     didFinishMeasurment = false;
 
     // freq = num-ticks / period
@@ -83,10 +83,6 @@ double get_input_freqy()
 // value from the sine table.
 // This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
 ISR(TIMER2_OVF_vect) {
-    // PWM generator
-    phasePosition += timeStep;  // clipped automatically on overflow
-    timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
-
     // Measure timer 1 as counter, use timer 2 as a reference
     // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
     if (isMeasuring) {
@@ -94,7 +90,7 @@ ISR(TIMER2_OVF_vect) {
             timer_disable_external_clock(TIMER_1);
 
             // Count the number of ticks there have been over 50 ms.
-            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE)
+            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE);
             didFinishMeasurment = true;
             isMeasuring = false;
         } else {
@@ -111,6 +107,10 @@ ISR(TIMER2_OVF_vect) {
 
         timer_enable_external_clock(TIMER_1);
     }
+
+    // PWM generator
+    phasePosition += timeStep;  // clipped automatically on overflow
+    timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
 }
 
 
