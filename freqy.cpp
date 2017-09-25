@@ -32,7 +32,8 @@ static volatile uint32_t phasePosition = 0;
 
 static volatile uint32_t measuredCount = 0;
 static volatile uint32_t sampleFrequencyTicks = 0;
-static volatile uint8_t numOverflows = 0;
+static volatile uint32_t numOverflows = 0;
+static  uint32_t waitForTicks = 0;
 static volatile bool shouldStartMeasurment = false;
 static volatile bool isMeasuring = false;
 static volatile bool didFinishMeasurment = false;
@@ -79,19 +80,20 @@ void init_freqy()
 }
 
 
-// Get the most up to date value. Block's execution for 50 ms to sample freqency.
-uint32_t wait_and_get_freqy()
+// Block's execution for captureTime (50 or 100 ms recommended) to sample freqency.
+uint32_t wait_and_capture_freqy(float captureTime)
 {
+    waitForTicks = (uint32_t)(captureTime / 1000.0 * pwmFreqency);
+    
     shouldStartMeasurment = true;
-
     while (!didFinishMeasurment) continue;  // wait for measurment
-    didFinishMeasurment = false;
+    didFinishMeasurment = false;  // reset
 
     // freq = num-ticks / period (seconds)
-    // There is a 20 Hz flicker since 1 extra tick translates to 20 Hz (1/0.05). Therefore,
-    // the freqency measurment has percision of 20 Hz on there is not point returning
-    // a floating point value.
-    return measuredCount * 20; // mult by 20 is about the same as div by 0.050011875000000004
+    // With a 50 ms captureTime, there is a 20 Hz flicker since 1 extra tick translates
+    // to 20 Hz (1/0.05). Therefore, the freqency measurment has percision of 20 Hz on
+    // there is not point returning a floating point value.
+    return measuredCount * (1000.0 / captureTime);
 }
 
 
@@ -118,11 +120,10 @@ void set_output_freqy(float newFrequency)
 // This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
 ISR(TIMER2_OVF_vect) {
     // Measure timer 1 as counter, use timer 2 as a reference
-    // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
     if (isMeasuring) {
 
         // Value chosen to give period of 50 ms.
-        if (sampleFrequencyTicks >= 1569) {
+        if (sampleFrequencyTicks >= waitForTicks) {
             timer_disable_external_clock(TIMER_1);
 
             // Count the number of ticks there have been over 50 ms.

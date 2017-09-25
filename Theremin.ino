@@ -18,6 +18,6 @@ void setup()
 }
 
 void loop() {
-    double freqency_in = wait_and_get_freqy();  // Read freqency from port 5
+    double freqency_in = wait_and_capture_freqy(50);  // Read freqency from port 5
     Serial.println(freqency_in);
 }
