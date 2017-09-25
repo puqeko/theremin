@@ -8,7 +8,7 @@
 #define FREQ_H
 
 void init_freqy();
-double get_input_freqy();
+uint32_t get_input_freqy();
 void set_output_freqy(float newFreqency);
 
 #endif

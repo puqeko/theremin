@@ -6,6 +6,9 @@ void setup()
     init_freqy();
     set_output_freqy(1000.0);
     Serial.begin(57600);
+
+    pinMode(6, OUTPUT);
+    analogWrite(6, 127);
 }
 
 void loop() {

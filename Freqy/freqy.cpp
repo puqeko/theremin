@@ -39,7 +39,7 @@ static volatile bool didFinishMeasurment = false;
 
 
 // Setup registers and initalise values. Called once in setup.
-void init_freqy()
+void init_freqy_in()
 {
     // Setup timer 2 as PWM generator
     // TIMER_2 has the ouput compare pin (OC2A) which is pin 11
@@ -64,53 +64,34 @@ void init_freqy()
 }
 
 
-// Get the most up to date value. Remeasured every 50 ms.
-double get_input_freqy()
+void init_freqy_out()
 {
-    sampleFrequencyTicks = numOverflows = 0;
-    REGISTER_TIMER1_COUNTER_VALUE = 0;
+    pinMode(5, INPUT);  // Clock signal input to timer 1
+
+    // Leave timer 1 as default (normal mode)
+}
+
+
+void init_freqy()
+{
+    init_freqy_in();
+    init_freqy_out();
+}
+
+
+// Get the most up to date value. Block's execution for 50 ms to sample freqency.
+uint32_t get_input_freqy()
+{
     shouldStartMeasurment = true;
 
     while (!didFinishMeasurment) continue;  // wait for measurment
     didFinishMeasurment = false;
 
-    // freq = num-ticks / period
-    return measuredCount / 0.050011875000000004;
-}
-
-
-// When counter value for TIMER_2 is zero (at the bottom), then set the next compare
-// value from the sine table.
-// This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
-ISR(TIMER2_OVF_vect) {
-    // Measure timer 1 as counter, use timer 2 as a reference
-    // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
-    if (isMeasuring) {
-        if (sampleFrequencyTicks >= 1569) {
-            timer_disable_external_clock(TIMER_1);
-
-            // Count the number of ticks there have been over 50 ms.
-            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE);
-            didFinishMeasurment = true;
-            isMeasuring = false;
-        } else {
-            if (timer_did_overflow(TIMER_1)) {
-                numOverflows++;
-                timer_clear_overflow(TIMER_1);
-            }
-
-            sampleFrequencyTicks++;
-        }
-    } else if (shouldStartMeasurment) {
-        shouldStartMeasurment = false;
-        isMeasuring = true;
-
-        timer_enable_external_clock(TIMER_1);
-    }
-
-    // PWM generator
-    phasePosition += timeStep;  // clipped automatically on overflow
-    timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
+    // freq = num-ticks / period (seconds)
+    // There is a 20 Hz flicker since 1 extra tick translates to 20 Hz (1/0.05). Therefore,
+    // the freqency measurment has percision of 20 Hz on there is not point returning
+    // a floating point value.
+    return measuredCount * 20; // mult by 20 is about the same as div by 0.050011875000000004
 }
 
 
@@ -129,4 +110,49 @@ void set_output_freqy(float newFrequency)
     // sub bit percision when incrimenting time steps. Read off the
     // top 8 bits (32 - 24) to get the realTimeStep back in bits.
     timeStep = (uint32_t)(realTimeStep * pow(2, 24));
+}
+
+
+// When counter value for TIMER_2 is zero (at the bottom), then set the next compare
+// value from the sine table.
+// This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
+ISR(TIMER2_OVF_vect) {
+    // Measure timer 1 as counter, use timer 2 as a reference
+    // Chosen because (1/31,372.54902) * 1569 = 0.050011875000000004 ~= 50 ms
+    if (isMeasuring) {
+
+        // Value chosen to give period of 50 ms.
+        if (sampleFrequencyTicks >= 1569) {
+            timer_disable_external_clock(TIMER_1);
+
+            // Count the number of ticks there have been over 50 ms.
+            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE);
+            didFinishMeasurment = true;
+            isMeasuring = false;
+        } else {
+            if (timer_did_overflow(TIMER_1)) {
+                numOverflows++;
+                timer_clear_overflow(TIMER_1);
+            }
+
+            sampleFrequencyTicks++;
+        }
+    } else if (shouldStartMeasurment) {
+
+        // start a measurment in sync with the period of timer 2
+        shouldStartMeasurment = false;
+        isMeasuring = true;
+
+        // start the count
+        sampleFrequencyTicks = numOverflows = 0;
+        REGISTER_TIMER1_COUNTER_VALUE = 0;
+        timer_enable_external_clock(TIMER_1);
+    }
+
+    // PWM generator
+    phasePosition += timeStep;  // clipped automatically on overflow
+
+    // The upper 8 bits of phasePosition are the current value, where the lower
+    // 24 bits are for sub bit percision.
+    timer_set_compare_value(TIMER_2, A, pgm_read_byte_near(&sineTable[phasePosition >> 24]));
 }

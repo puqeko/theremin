@@ -26,7 +26,8 @@
  {
    pinMode(pinLed, OUTPUT);      // sets the digital pin as output
    pinMode(pinFreq, INPUT);
-   pinMode(8, OUTPUT);
+   pinMode(6, OUTPUT);
+   analogWrite(6, 127);
  
    Serial.begin(57600);        // connect to the serial port
  
@@ -88,7 +89,7 @@
  
    f_meter_start();
    while (f_ready == 0);            // wait for period length end (100ms) by interrupt
-   
+   Serial.println(freq_in * 10);
  }
  //******************************************************************
  void f_meter_start() {
@@ -97,9 +98,8 @@
    sbi (GTCCR,PSRASY);              // reset presacler counting
    TCNT2=0;                         // timer2=0
    TCNT1=0;                         // Counter1 = 0
-   cbi (TIMSK0,TOIE0);              // dissable Timer0 again // millis and delay
+   //cbi (TIMSK0,TOIE0);              // dissable Timer0 again // millis and delay
    sbi (TIMSK2,OCIE2A);             // enable Timer2 Interrupt
-   TCCR1B = TCCR1B | 7;             //  Counter Clock source = pin T1 , start counting now
  }
  
  //******************************************************************
@@ -108,7 +108,9 @@
  // here the gatetime generation for freq. measurement takes place: 
  
  ISR(TIMER2_COMPA_vect) {
- 
+   if (i_tics==0) {
+    TCCR1B = TCCR1B | 7;             //  Counter Clock source = pin T1 , start counting now
+   }
    if (i_tics==50) {         // multiple 2ms = gate time = 100 ms
                              // end of gate time, measurement ready
      TCCR1B = TCCR1B & ~7;   // Gate Off  / Counter T1 stopped
