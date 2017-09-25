@@ -1,4 +1,4 @@
-// Freqy.h - Freqency measurment on Arduino Uno.
+// freqy.h - Freqency measurment on Arduino Uno.
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
 
@@ -8,7 +8,7 @@
 #define FREQ_H
 
 void init_freqy();
-uint32_t get_input_freqy();
+uint32_t wait_and_get_freqy();
 void set_output_freqy(float newFreqency);
 
 #endif

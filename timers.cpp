@@ -1,4 +1,4 @@
-// Timers.c
+// timers.cpp
 // 20-09-17
 // Support funtion for using builtin timers.
 

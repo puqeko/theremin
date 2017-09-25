@@ -1,4 +1,4 @@
-// Freqy.c - Freqency measurment on Arduino Uno.
+// freqy.cpp - Freqency measurment on Arduino Uno.
 // ENEL200 Design Project, building a theremin.
 // 17-09-17, Group 13
 //
@@ -80,7 +80,7 @@ void init_freqy()
 
 
 // Get the most up to date value. Block's execution for 50 ms to sample freqency.
-uint32_t get_input_freqy()
+uint32_t wait_and_get_freqy()
 {
     shouldStartMeasurment = true;
 

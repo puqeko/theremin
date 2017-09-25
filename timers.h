@@ -1,4 +1,4 @@
-// Timers.h
+// timers.h
 // 20-09-17
 //
 // Here be automagic...
