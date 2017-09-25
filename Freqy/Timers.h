@@ -9,8 +9,8 @@
 #ifndef TIMERS_H
 #define TIMERS_H
 
-#define F_CPU 16000000 // 16 megahertz for the Arduino Uno
-#define timer_pwm_freqency(prescaler) (F_CPU / (prescaler * 510.0))
+#define FREQ_CPU 16000000 // 16 megahertz for the Arduino Uno
+#define timer_pwm_freqency(prescaler) (FREQ_CPU / (prescaler * 510.0))
 
 // set and clear bits
 #define BIT(bitnumber) (1 << bitnumber)
@@ -86,7 +86,7 @@ enum {
 
 
 // Initalise registers to zero.
-extern void clear_registers();
+void clear_registers();
 
 // REGISTER LAYOUT
 //                    TIMER 0 (System Clock, 8 Bits)
