@@ -4,6 +4,10 @@
 //
 // Use PWM to generate a sqaure wave with a sinusoidally varying duty cycle.
 // Putting the signal through a low pass filter will yield a sine wave.
+//
+// Arduino pins:
+// 11 : Generate
+// 5  : Measure
 
 #include <avr/pgmspace.h>
 #include <math.h>
@@ -11,6 +15,7 @@
 #include "freqy.h"
 #include "timers.h"
 
+// For generating a freqency.
 const PROGMEM unsigned char sineTable[] = {
     127,130,133,136,139,143,146,149,152,155,158,161,164,167,170,173,176,178,
     181,184,187,190,192,195,198,200,203,205,208,210,212,215,217,219,221,223,
@@ -30,6 +35,7 @@ const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
 static uint32_t timeStep = (uint32_t)4 << 24;  // about 490 Hz by below calculation
 static volatile uint32_t phasePosition = 0;
 
+// For capturing the input freqency
 static volatile uint32_t measuredCount = 0;
 static volatile uint32_t sampleFrequencyTicks = 0;
 static volatile uint32_t numOverflows = 0;
