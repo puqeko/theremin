@@ -4,9 +4,13 @@
 
 #include "Arduino.h"
 
-#ifndef FREQ_H
-#define FREQ_H
+#ifndef FILTER_H
+#define FILTER_H
 
+// Set the inital value to high instead of low
+void init_filter_with(double initValue);
 
+// Return the result of the filter being applied to nextDistance.
+double apply_filter(float nextDistance);
 
 #endif

@@ -36,7 +36,7 @@ double apply_filter(float nextDistance) {
 
 
 // So that there is no transient sound on startup, initalise to max value
-void init_filter_max_value()
+void init_filter_with(double initValue)
 {
-    for (int i = 0; i < KERNAL_SIZE; distanceBuffer[i++] = MAX_RELYABLE_DISTANCE);
+    for (int i = 0; i < KERNAL_SIZE; distanceBuffer[i++] = initValue);
 }
