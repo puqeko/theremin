@@ -79,7 +79,7 @@ void frequency_out_init()
 }
 
 
-void init_freqy()
+void frequency_init()
 {
     frequency_in_init();
     frequency_out_init();
@@ -108,7 +108,7 @@ uint32_t frequency_read(float captureTime)
 // to acheive the desired newFrequency. The top 8 bits represent the true
 // value, and the remaining lower bits are used for sub bit precision only.
 // Using an integer is required for optimisation of the interupt function.
-void set_output_freqy(float newFrequency)
+void frequency_set(float newFrequency)
 {
     // rearrange from signalFreqency = (pwmFreqency / 256) * timeStep
     // 256 is the length of the sine table
