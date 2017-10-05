@@ -31,7 +31,7 @@ const PROGMEM unsigned char sineTable[] = {
     49,51,54,56,59,62,64,67,70,73,76,78,81,84,87,90,93,96,99,102,105,108,111,
     115,118,121,124
 };
-const float pwmFreqency = timer_pwm_freqency(TIMER_PRESCALER_1);
+const float pwmFreqency = timer_pwm_frequency(TIMER_PRESCALER_1);
 static uint32_t timeStep = (uint32_t)4 << 24;  // about 490 Hz by below calculation
 static volatile uint32_t phasePosition = 0;
 
@@ -46,7 +46,7 @@ static volatile bool didFinishMeasurment = false;
 
 
 // Setup registers and initalise values. Called once in setup.
-void init_freqy_in()
+void frequency_in_init()
 {
     // Setup timer 2 as PWM generator
     // TIMER_2 has the ouput compare pin (OC2A) which is pin 11
@@ -71,7 +71,7 @@ void init_freqy_in()
 }
 
 
-void init_freqy_out()
+void frequency_out_init()
 {
     pinMode(5, INPUT);  // Clock signal input to timer 1
 
@@ -81,13 +81,13 @@ void init_freqy_out()
 
 void init_freqy()
 {
-    init_freqy_in();
-    init_freqy_out();
+    frequency_in_init();
+    frequency_out_init();
 }
 
 
 // Block's execution for captureTime (50 or 100 ms recommended) to sample freqency.
-uint32_t wait_and_capture_freqy(float captureTime)
+uint32_t frequency_read(float captureTime)
 {
     waitForTicks = (uint32_t)(captureTime / 1000.0 * pwmFreqency);
     

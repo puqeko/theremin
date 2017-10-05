@@ -10,7 +10,7 @@
 #define TIMERS_H
 
 #define FREQ_CPU 16000000 // 16 megahertz for the Arduino Uno
-#define timer_pwm_freqency(prescaler) (FREQ_CPU / (prescaler * 510.0))
+#define timer_pwm_frequency(prescaler) (FREQ_CPU / (prescaler * 510.0))
 
 // set and clear bits
 #define BIT(bitnumber) (1 << bitnumber)

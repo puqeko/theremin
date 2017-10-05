@@ -7,9 +7,9 @@
 #ifndef FREQ_H
 #define FREQ_H
 
-void init_freqy();
-void set_output_freqy(float newFreqency);
+void frequency_init(void);
+void frequency_set(float newFreqency);
 
-uint32_t wait_and_capture_freqy(float captureTime);
+uint32_t frequency_read(float captureTime);
 
 #endif
