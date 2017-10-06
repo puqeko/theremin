@@ -24,6 +24,10 @@
 #define VOLUME_PIN 6  // Timer 0
 #define MODE_BUTTON_PIN 9
 
+#define POWER_SWITCH_PIN 10 
+#define POWER_LED_PIN 11
+#define ON 1
+#define OFF 0 
 // #define NUMBER_OF_MODES 2
 // enum modes {continuous, discrete};
 // int current_mode = continuous;
@@ -61,6 +65,8 @@ void setup()
 	pinMode(ECHO_PIN, INPUT);
 	pinMode(8, INPUT_PULLUP); 
     pinMode(9, INPUT_PULLUP);
+    pinMode(10, INPUT_PULLUP);
+    pinMode(11, OUTPUT);
     
     // So that this does not hog CPU when not connect.
     //isUltrasonicConnected = (get_ultrasonic_distance() != 0);
@@ -98,8 +104,41 @@ double distance_to_volume (double distance) {
     return ((distance - 2) / (MAX_ULTRASONIC_DISTANCE - 2) * (255 * FET_PINCHOFF_VOLTAGE / 5.0));
 }
 
+<<<<<<< HEAD
 
 void buttons(void) {
+=======
+double calibrate(void) {
+    // Insert calibration (low) function.
+    double low_freq = frequency_read();
+    digitalWrite(LED_BUILTIN, HIGH);
+
+    while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
+    while (digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for press again.
+    
+    // Insert calibration (high) function.
+    double high_freq = frequency_read();
+    digitalWrite(LED_BUILTIN, LOW);
+
+    abs_min_freq = (high_freq - low_freq) * 0.1 + low_freq;
+    abs_max_freq = high_freq - (high_freq - low_freq) * 0.1;
+
+    while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
+}
+
+int switch_power (int current_power_state) {
+    if (current_power_state) {
+        current_power_state = OFF;
+    } else {
+        current_power_state = ON;
+    }
+}
+
+void loop() {
+    double abs_min_freq = 0;
+    double abs_max_freq = 0;
+    int power_state = 0;
+>>>>>>> c4a1637... added power switch
     if (!digitalRead(MODE_BUTTON_PIN)) {
         //mode_toggle();
         while(!digitalRead(MODE_BUTTON_PIN)) continue;
@@ -107,16 +146,12 @@ void buttons(void) {
 
     // Volume control: Calibrate input frequency boundaries from capacitive sensor.
     if (!digitalRead(CALIBRATION_BUTTON_PIN)) {
-        // Insert calibration (low) function.
-        digitalWrite(LED_BUILTIN, HIGH);
+        calibrate();
+    }
 
-        while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
-        while (digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for press again.
-        
-        // Insert calibration (high) function.
-        digitalWrite(LED_BUILTIN, LOW);
-
-        while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
+    if (!digitalRead(POWER_SWITCH_PIN)) {
+        //mode_toggle();
+        while(!digitalRead(MODE_BUTTON_PIN)) continue;
     }
 }
 
@@ -126,11 +161,17 @@ void loop() {
 
     double distance_raw = get_ultrasonic_distance();  // Undetermined wait for responce pulse.
     double distance_in = filter_apply(distance_raw);
+<<<<<<< HEAD
 
     double frequency_out = distance_to_frequency(distance_in);
     double frequency_in = frequency_read(16);  // Sample at ~62 Hz (1000/16) from port 5.
 
     // Clip so that no sound occurs when out of range.
+=======
+`
+    //double frequency_out = distance_to_frequency(distance_in);
+    double vol = distance_to_volume(distance_in);
+>>>>>>> c4a1637... added power switch
     if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
         frequency_out = 0;
     }
