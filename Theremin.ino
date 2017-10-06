@@ -117,12 +117,12 @@ void loop() {
         while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
     }
 
-    double frequency_in = frequency_read(50);  // Wait 50 ms and read freqency from port 5.
+    //double frequency_in = frequency_read(50);  // Wait 50 ms and read freqency from port 5.
     double distance_raw = get_ultrasonic_distance();  // Undetermined wait for responce pulse.
     double distance_in = filter_apply(distance_raw);
 
     double frequency_out = distance_to_frequency(distance_in);
-    double frequency_unfiltered = distance_to_frequency(distance_raw);
+    //double frequency_unfiltered = distance_to_frequency(distance_raw);
     // double vol = distance_to_volume(distance_in);
     // if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
     //     vol = 255;
@@ -136,6 +136,6 @@ void loop() {
     analogWrite(VOLUME_PIN, 255);//vol);  // set volume pin 6 at frequency-controlled voltage (0 - 255 gives 0V - 5V)
 
     // Debug
-    Serial.print(frequency_);
+    //Serial.print(frequency_);
     Serial.println(frequency_out);
 }
