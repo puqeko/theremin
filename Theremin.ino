@@ -121,15 +121,21 @@ void loop() {
     double distance_raw = get_ultrasonic_distance();  // Undetermined wait for responce pulse.
     double distance_in = filter_apply(distance_raw);
 
-    //double frequency_out = distance_to_frequency(distance_in);
-    double vol = distance_to_volume(distance_in);
+    double frequency_out = distance_to_frequency(distance_in);
+    double frequency_unfiltered = distance_to_frequency(distance_raw);
+    // double vol = distance_to_volume(distance_in);
+    // if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
+    //     vol = 255;
+    // }
+
     if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
-        vol = 255;
+        frequency_out = 0;
     }
 
-    frequency_set(440);  // generate 1000 Hz on port 11
-    analogWrite(VOLUME_PIN, vol);  // set volume pin 6 at frequency-controlled voltage (0 - 255 gives 0V - 5V)
+    frequency_set(frequency_out);  // generate 1000 Hz on port 11
+    analogWrite(VOLUME_PIN, 255);//vol);  // set volume pin 6 at frequency-controlled voltage (0 - 255 gives 0V - 5V)
 
     // Debug
-    Serial.println(vol);
+    Serial.print(frequency_);
+    Serial.println(frequency_out);
 }
