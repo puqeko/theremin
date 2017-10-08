@@ -125,36 +125,36 @@ void frequency_set(float newFrequency)
 // value from the sine table.
 // This is called at a freqency of 31,372 Hz since 16 MHz / 510 = 31,372.
 ISR(TIMER2_OVF_vect) {
-    // // Measure timer 1 as counter, use timer 2 as a reference
-    // if (isMeasuring) {
+    // Measure timer 1 as counter, use timer 2 as a reference
+    if (isMeasuring) {
 
-    //     // Value chosen to give period of 50 ms.
-    //     if (sampleFrequencyTicks >= waitForTicks) {
-    //         timer_disable_external_clock(TIMER_1);
+        // Value chosen to give period of 50 ms.
+        if (sampleFrequencyTicks >= waitForTicks) {
+            timer_disable_external_clock(TIMER_1);
 
-    //         // Count the number of ticks there have been over 50 ms.
-    //         measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE);
-    //         didFinishMeasurment = true;
-    //         isMeasuring = false;
-    //     } else {
-    //         if (timer_did_overflow(TIMER_1)) {
-    //             numOverflows++;
-    //             timer_clear_overflow(TIMER_1);
-    //         }
+            // Count the number of ticks there have been over 50 ms.
+            measuredCount = REGISTER_TIMER1_COUNTER_VALUE + (numOverflows * TIMER1_SIZE);
+            didFinishMeasurment = true;
+            isMeasuring = false;
+        } else {
+            if (timer_did_overflow(TIMER_1)) {
+                numOverflows++;
+                timer_clear_overflow(TIMER_1);
+            }
 
-    //         sampleFrequencyTicks++;
-    //     }
-    // } else if (shouldStartMeasurment) {
+            sampleFrequencyTicks++;
+        }
+    } else if (shouldStartMeasurment) {
 
-    //     // start a measurment in sync with the period of timer 2
-    //     shouldStartMeasurment = false;
-    //     isMeasuring = true;
+        // start a measurment in sync with the period of timer 2
+        shouldStartMeasurment = false;
+        isMeasuring = true;
 
-    //     // start the count
-    //     sampleFrequencyTicks = numOverflows = 0;
-    //     REGISTER_TIMER1_COUNTER_VALUE = 0;
-    //     timer_enable_external_clock(TIMER_1);
-    // }
+        // start the count
+        sampleFrequencyTicks = numOverflows = 0;
+        REGISTER_TIMER1_COUNTER_VALUE = 0;
+        timer_enable_external_clock(TIMER_1);
+    }
 
     // PWM generator
     phasePosition += timeStep;  // clipped automatically on overflow

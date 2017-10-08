@@ -122,11 +122,7 @@ void loop() {
     double distance_in = filter_apply(distance_raw);
 
     double frequency_out = distance_to_frequency(distance_in);
-    //double frequency_unfiltered = distance_to_frequency(distance_raw);
-    // double vol = distance_to_volume(distance_in);
-    // if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
-    //     vol = 255;
-    // }
+    double frequency_in = frequency_read(16);
 
     if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
         frequency_out = 0;
