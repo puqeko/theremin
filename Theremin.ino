@@ -110,7 +110,7 @@ double calibrate(void) {
 
 void buttons(void) {
 
-    is_power_on = !digitalRead(POWER_SWITCH_PIN));
+    is_power_on = !digitalRead(POWER_SWITCH_PIN);
 
     // Make it go quiet.
     if (!is_power_on) {
