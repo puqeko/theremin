@@ -88,16 +88,18 @@ void setup()
 //   }
 // }
 
+
 double distance_to_frequency (double distance) {
     return distance / MAX_ULTRASONIC_DISTANCE * MAX_OUTPUT_FREQUENCY + 100;
 }
+
 
 double distance_to_volume (double distance) {
     return ((distance - 2) / (MAX_ULTRASONIC_DISTANCE - 2) * (255 * FET_PINCHOFF_VOLTAGE / 5.0));
 }
 
-void loop() {
 
+void buttons(void) {
     if (!digitalRead(MODE_BUTTON_PIN)) {
         //mode_toggle();
         while(!digitalRead(MODE_BUTTON_PIN)) continue;
@@ -116,22 +118,28 @@ void loop() {
 
         while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
     }
+}
 
-    //double frequency_in = frequency_read(50);  // Wait 50 ms and read freqency from port 5.
+void loop() {
+
+    buttons();
+
     double distance_raw = get_ultrasonic_distance();  // Undetermined wait for responce pulse.
     double distance_in = filter_apply(distance_raw);
 
     double frequency_out = distance_to_frequency(distance_in);
-    double frequency_in = frequency_read(16);
+    double frequency_in = frequency_read(16);  // Sample at ~62 Hz (1000/16) from port 5.
 
+    // Clip so that no sound occurs when out of range.
     if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
         frequency_out = 0;
     }
 
-    frequency_set(frequency_out);  // generate 1000 Hz on port 11
-    analogWrite(VOLUME_PIN, 255);//vol);  // set volume pin 6 at frequency-controlled voltage (0 - 255 gives 0V - 5V)
+    frequency_set(frequency_out);  // Generate 1000 Hz on port 11.
+
+    // (0 - 255 gives 0V - 5V, or low to high volume)
+    analogWrite(VOLUME_PIN, 255);  // Set volume pin 6 at frequency-controlled voltage.
 
     // Debug
-    //Serial.print(frequency_);
-    Serial.println(frequency_out);
+    Serial.println(frequency_in);
 }
