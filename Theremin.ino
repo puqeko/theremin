@@ -89,11 +89,6 @@ double distance_to_volume(double distance) {
 }
 
 
-int switch_power(void) {
-    is_power_on = !is_power_on;
-}
-
-
 double calibrate(void) {
     // Insert calibration (low) function.
     frequency_set(0);
@@ -115,16 +110,14 @@ double calibrate(void) {
 
 void buttons(void) {
 
-    if (!digitalRead(POWER_SWITCH_PIN)) {
-        switch_power();
+    is_power_on = !digitalRead(POWER_SWITCH_PIN));
 
-        // Make it go quiet.
-        if (!is_power_on) {
-            frequency_set(0);
-        }
-
-        while(!digitalRead(POWER_SWITCH_PIN)) continue;
+    // Make it go quiet.
+    if (!is_power_on) {
+        frequency_set(0);
     }
+
+    while(!digitalRead(POWER_SWITCH_PIN)) continue;  // Wait until release.
 
     if (is_power_on) {
         if (!digitalRead(MODE_BUTTON_PIN)) {
