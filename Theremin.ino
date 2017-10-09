@@ -12,6 +12,7 @@
 #define MAX_OUTPUT_FREQUENCY 1500.0
 #define MAX_ULTRASONIC_DISTANCE 60.0  // in cm (trim to this)
 #define MAX_RELIABLE_DISTANCE 120.0  // stop extreme readings from ultrasonics
+#define MAX_WAIT_TIME ((MAX_RELIABLE_DISTANCE) / (100 * 340) * 1.2)
 
 #define FET_PINCHOFF_VOLTAGE 3.3
 #define ARDUINO_MAX_VOLTAGE_OUT 5
@@ -21,7 +22,7 @@
 #define CALIBRATION_BUTTON_PIN 8
 #define MODE_BUTTON_PIN 9
 #define POWER_SWITCH_PIN 10 
-#define POWER_LED_PIN ??  // TODO: Get a pin for this.
+#define POWER_LED_PIN 1  // TODO: Get a pin for this.
 
 // Ultrasonic pins
 #define TRIGGER_PIN 12
@@ -37,7 +38,7 @@ static bool is_power_on = true;
 
 
 // get distance in cm to object
-double get_ultrasonic_distance(void) {
+double get_ultrasonic_distance() {
 
     // Don't hog cpu if not connected
     if (!is_ultrasonic_connected) return 0;
@@ -50,7 +51,11 @@ double get_ultrasonic_distance(void) {
 	digitalWrite(TRIGGER_PIN, LOW);
 
 	// the time until a pulse is received from the echo pin
-	unsigned long duration = pulseIn(ECHO_PIN, HIGH);
+    unsigned long duration = pulseIn(ECHO_PIN, HIGH, MAX_WAIT_TIME);
+    
+    if (duration == 0) {  // No return signal received.
+        duration = MAX_RELIABLE_DISTANCE;
+    }
 
 	// clip to MAX_RELIABLE_DISTANCE cm to stop extreme readings
 	return min(duration / 58.2, MAX_RELIABLE_DISTANCE); // 58.2 does conversion of time to distance (in cm)
@@ -89,7 +94,7 @@ double distance_to_volume(double distance) {
 }
 
 
-double calibrate(void) {
+double calibrate() {
     // Insert calibration (low) function.
     frequency_set(0);
 
@@ -108,9 +113,10 @@ double calibrate(void) {
     abs_max_freq = high_freq - (high_freq - low_freq) * 0.1;
 }
 
-void buttons(void) {
 
-    is_power_on = !digitalRead(POWER_SWITCH_PIN);
+void buttons() {
+
+    is_power_on = digitalRead(POWER_SWITCH_PIN);
 
     // Make it go quiet.
     if (!is_power_on) {
@@ -156,7 +162,9 @@ void loop() {
         analogWrite(VOLUME_PIN, 255);  // Set volume pin 6 at frequency-controlled voltage.
 
         // Debug
-        Serial.println(frequency_in);
+        Serial.print(distance_raw);
+        Serial.print(" ");
+        Serial.println(distance_in);
     }
 }
 
