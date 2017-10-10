@@ -12,7 +12,7 @@
 #define MAX_OUTPUT_FREQUENCY 1500.0
 #define MAX_ULTRASONIC_DISTANCE 60.0  // in cm (trim to this)
 #define MAX_RELIABLE_DISTANCE 120.0  // stop extreme readings from ultrasonics
-#define MAX_WAIT_TIME ((MAX_RELIABLE_DISTANCE) / (100 * 340) * 1.2)
+#define MAX_WAIT_TIME ((MAX_RELIABLE_DISTANCE * 2) / (100 * 340) * 1.2)
 
 #define FET_PINCHOFF_VOLTAGE 3.3
 #define ARDUINO_MAX_VOLTAGE_OUT 5
@@ -86,11 +86,19 @@ double distance_to_frequency(double distance) {
 }
 
 
-double distance_to_volume(double distance) {
+char distance_to_volume(double distance) {
     // -2 because Ultrasonic useless within 2 cm.
     // 255 is max output value to pin.
     // 5v is max pin voltage.
     return ((distance - 2) / (MAX_ULTRASONIC_DISTANCE - 2) * (255 * FET_PINCHOFF_VOLTAGE / 5.0));
+}
+
+
+char frequency_to_volume(double frequency) {
+    double vol = (frequency - abs_min_freq) / (abs_max_freq - abs_min_freq) * 255.0;
+    vol = min(255, vol);
+    vol = max(0, vol;)
+    return (char) vol;
 }
 
 
@@ -157,14 +165,15 @@ void loop() {
         }
 
         frequency_set(frequency_out);  // Generate on port 11.
+        char volume = frequency_to_volume(frequency_in);
 
         // (0 - 255 gives 0V - 5V, or low to high volume)
-        analogWrite(VOLUME_PIN, 255);  // Set volume pin 6 at frequency-controlled voltage.
+        analogWrite(VOLUME_PIN, volume);  // Set volume pin 6 at frequency-controlled voltage.
 
         // Debug
-        Serial.print(distance_raw);
-        Serial.print(" ");
-        Serial.println(distance_in);
+        // Serial.print(frequency_out);
+        // Serial.print(" ");
+        Serial.println(frequency_out);
     }
 }
 
