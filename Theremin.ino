@@ -115,14 +115,17 @@ double calibrate() {
     frequency_set(0);
 
     double low_freq = frequency_read(100);  // Wait 100 ms
-    digitalWrite(LED_BUILTIN, HIGH);
+    //digitalWrite(LED_BUILTIN, HIGH);
+    Serial.println("LOW");
 
-    while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
-    while (digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for press again.
+    while (digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
+    delay(100);
+    while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for press again.
     
     // Insert calibration (high) function.
     double high_freq = frequency_read(100);  // Wait 100 ms
-    digitalWrite(LED_BUILTIN, LOW);
+    //digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("HIGH");
 
     // With 10% padding.
     abs_min_freq = (high_freq - low_freq) * 0.1 + low_freq;
@@ -132,25 +135,23 @@ double calibrate() {
 
 void buttons() {
 
-    is_power_on = digitalRead(POWER_SWITCH_PIN);
+    is_power_on = !digitalRead(POWER_SWITCH_PIN);
 
     // Make it go quiet.
     if (!is_power_on) {
         frequency_set(0);
     }
 
-    while(!digitalRead(POWER_SWITCH_PIN)) continue;  // Wait until release.
-
     if (is_power_on) {
-        if (!digitalRead(MODE_BUTTON_PIN)) {
-            //mode_toggle();
-            while(!digitalRead(MODE_BUTTON_PIN)) continue;
-        }
+        // if (!digitalRead(MODE_BUTTON_PIN)) {
+        //     //mode_toggle();
+        //     while(!digitalRead(MODE_BUTTON_PIN)) continue;
+        // }
 
         // Volume control: Calibrate input frequency boundaries from capacitive sensor.
-        if (!digitalRead(CALIBRATION_BUTTON_PIN)) {
+        if (digitalRead(CALIBRATION_BUTTON_PIN)) {
             calibrate();
-            while (!digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
+            while (digitalRead(CALIBRATION_BUTTON_PIN)) continue;  // Wait for release.
         }
     }
 }
@@ -183,7 +184,7 @@ void loop() {
         // Debug
         // Serial.print(frequency_out);
         // Serial.print(" ");
-        Serial.println(frequency_out);
+        // Serial.println(frequency_in);
     }
 }
 
