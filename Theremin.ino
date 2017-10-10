@@ -32,9 +32,14 @@
 // For debugging.
 static bool is_ultrasonic_connected = true;
 
-static double abs_min_freq = 0;
-static double abs_max_freq = 0;
+static double abs_min_freq = 30550;
+static double abs_max_freq = 31400;
 static bool is_power_on = true;
+
+// float minFreq = 30600.00;
+// float maxFreq = 31360.00;
+// float absMinFreq = 30550.00;
+// float absMaxFreq = 31400.00;
 
 
 // get distance in cm to object
@@ -73,6 +78,9 @@ void setup()
 	pinMode(CALIBRATION_BUTTON_PIN, INPUT_PULLUP); 
     pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
     pinMode(POWER_SWITCH_PIN, INPUT_PULLUP);
+    pinMode(POWER_LED_PIN, OUTPUT);
+
+    digitalWrite(POWER_LED_PIN, HIGH);
     
     // TODO: check inital power switch value.
     
@@ -97,7 +105,7 @@ char distance_to_volume(double distance) {
 char frequency_to_volume(double frequency) {
     double vol = (frequency - abs_min_freq) / (abs_max_freq - abs_min_freq) * 255.0;
     vol = min(255, vol);
-    vol = max(0, vol;)
+    vol = max(0, vol);
     return (char) vol;
 }
 
@@ -163,6 +171,8 @@ void loop() {
         if (distance_raw > MAX_ULTRASONIC_DISTANCE) {
             frequency_out = 0;
         }
+
+        // TODO: Add discrete frequency here.
 
         frequency_set(frequency_out);  // Generate on port 11.
         char volume = frequency_to_volume(frequency_in);
