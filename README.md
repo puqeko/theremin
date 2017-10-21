@@ -7,4 +7,4 @@
 - Volume control.
 - Button Logic.
 
-![theremin with lid off](https://user-images.githubusercontent.com/12654833/31856143-053caaa2-b717-11e7-8993-5c2d4fc9df21.jpg)
+![theremin with lid off](https://user-images.githubusercontent.com/12654833/31856177-878c02c8-b717-11e7-89b6-9980f6c993e6.jpg)
